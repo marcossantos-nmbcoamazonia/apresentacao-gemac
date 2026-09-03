@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(grep -n \"replace\\(/\\\\[\" src/api/parseSheet.ts)",
+      "Bash(python -c ' *)",
+      "Bash(cd \"c:/Users/marco/OneDrive/Desktop/GOON/Núcleo de Mídia Banco da Amazônia/copac/apresentacao-copac\" && ls .claude/skills 2>/dev/null; echo \"--- chromium-cli? ---\"; which chromium-cli chromium google-chrome chrome playwright npx 2>/dev/null; echo \"--- windows chrome ---\"; ls \"/c/Program Files/Google/Chrome/Application/chrome.exe\" \"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" 2>/dev/null)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)"
+    ]
+  }
+}
