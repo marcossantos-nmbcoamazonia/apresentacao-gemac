@@ -24,7 +24,11 @@ export interface DeckNav {
   ativo: boolean
 }
 
-export function useDeckNav(total: number, aoRecarregar: () => void): DeckNav {
+export function useDeckNav(
+  total: number,
+  aoRecarregar: () => void,
+  aoExportarPdf: () => void,
+): DeckNav {
   const [indice, setIndice] = useState(() => lerHash(total))
   const [overviewAberto, setOverviewAberto] = useState(false)
   const [telaCheia, setTelaCheia] = useState(false)
@@ -72,6 +76,13 @@ export function useDeckNav(total: number, aoRecarregar: () => void): DeckNav {
   // ---- teclado -------------------------------------------------------------
   useEffect(() => {
     const aoTeclar = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+P nativo imprimiria só o slide em tela, sem as imagens das
+      // outras páginas: passa pelo mesmo fluxo do botão PDF
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault()
+        aoExportarPdf()
+        return
+      }
       if (e.metaKey || e.ctrlKey || e.altKey) return
       // com um botão da barra em foco, espaço/Enter devem acioná-lo, não navegar
       const alvo = e.target as HTMLElement | null
@@ -118,12 +129,25 @@ export function useDeckNav(total: number, aoRecarregar: () => void): DeckNav {
               e.preventDefault()
               aoRecarregar()
               break
+            case 'p':
+              e.preventDefault()
+              aoExportarPdf()
+              break
           }
       }
     }
     window.addEventListener('keydown', aoTeclar)
     return () => window.removeEventListener('keydown', aoTeclar)
-  }, [proximo, anterior, ir, total, overviewAberto, alternarTelaCheia, aoRecarregar])
+  }, [
+    proximo,
+    anterior,
+    ir,
+    total,
+    overviewAberto,
+    alternarTelaCheia,
+    aoRecarregar,
+    aoExportarPdf,
+  ])
 
   // ---- swipe ---------------------------------------------------------------
   useEffect(() => {

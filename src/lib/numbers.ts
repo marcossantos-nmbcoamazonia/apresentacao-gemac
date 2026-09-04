@@ -60,6 +60,12 @@ export function formatFull(n: number | null, opts: { moeda?: boolean } = {}): st
   return `${opts.moeda ? 'R$ ' : ''}${nf(0).format(n)}`
 }
 
+/** Taxa: "3,14%". Percentual não escala em Mi/Mil — sempre uma ou duas casas. */
+export function formatPercent(n: number | null, casas = 2): string {
+  if (n == null) return '—'
+  return `${nf(casas).format(n)}%`
+}
+
 export interface Variacao {
   pct: number
   direcao: 'alta' | 'baixa' | 'estavel'
@@ -76,8 +82,29 @@ export function variacao(atual: number | null, anterior: number | null): Variaca
   }
 }
 
+const seta = (d: Variacao['direcao']) => (d === 'alta' ? '▲' : d === 'baixa' ? '▼' : '◆')
+
 /** "▲ 45%" — o sinal já vai embutido na seta, então o número sai sem sinal. */
 export function formatVariacao(v: Variacao): string {
-  const seta = v.direcao === 'alta' ? '▲' : v.direcao === 'baixa' ? '▼' : '◆'
-  return `${seta} ${nf(0).format(Math.abs(v.pct))}%`
+  return `${seta(v.direcao)} ${nf(0).format(Math.abs(v.pct))}%`
+}
+
+/**
+ * Diferença entre dois indicadores que já são percentuais.
+ * A variação relativa de uma taxa ("de 3,14% para 5,42% = +73%") se lê errado
+ * com facilidade; em pontos percentuais — "▲ 2,3 p.p." — não há ambiguidade.
+ */
+export function variacaoEmPontos(atual: number | null, anterior: number | null): Variacao | null {
+  if (atual == null || anterior == null) return null
+  const pontos = atual - anterior
+  if (!Number.isFinite(pontos)) return null
+  return {
+    pct: pontos,
+    direcao: Math.abs(pontos) < 0.05 ? 'estavel' : pontos > 0 ? 'alta' : 'baixa',
+  }
+}
+
+/** "▲ 2,3 p.p." */
+export function formatPontos(v: Variacao): string {
+  return `${seta(v.direcao)} ${nf(1).format(Math.abs(v.pct))} p.p.`
 }

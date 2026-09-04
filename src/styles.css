@@ -31,6 +31,15 @@
   /* o canvas base de todo slide */
   --canvas-w: 1280px;
   --canvas-h: 720px;
+
+  /*
+   * Faixa reservada à barra de controles. O palco encolhe por ela, então a
+   * barra de progresso nunca passa por cima do rodapé de um slide — o problema
+   * é pior em tela pequena, onde a barra tem altura fixa em px e o slide não.
+   * SlideFrame e OverviewGrid leem este valor; ele é a fonte única.
+   * A barra mede 57 px — os 7 px a mais são a folga entre ela e o slide.
+   */
+  --altura-chrome: 64px;
 }
 
 * {
@@ -61,6 +70,8 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
+  /* o slide se centraliza acima da barra de controles, nunca atrás dela */
+  padding-bottom: var(--altura-chrome);
 }
 
 /* tem o tamanho JÁ escalado — é ele que o palco centraliza */
@@ -141,10 +152,16 @@ body {
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.chrome__botao:hover {
+.chrome__botao:hover:not(:disabled) {
   background: rgb(255 255 255 / 12%);
   color: var(--branco);
   border-color: rgb(255 255 255 / 32%);
+}
+
+.chrome__botao:disabled {
+  cursor: progress;
+  color: var(--lima);
+  border-color: rgb(226 255 106 / 35%);
 }
 
 /* pílula de status da planilha — a "automação" visível */
@@ -220,6 +237,11 @@ body {
   .chrome__contador {
     display: none;
   }
+
+  /* sem os botões a barra encolhe, e o slide recupera a diferença */
+  :root {
+    --altura-chrome: 56px;
+  }
 }
 
 /* ---------- overview -------------------------------------------------------- */
@@ -235,6 +257,8 @@ body {
   gap: 22px;
   grid-template-columns: repeat(2, auto);
   padding: 40px;
+  /* mesma faixa reservada do palco: a grade não encosta na barra de controles */
+  padding-bottom: calc(40px + var(--altura-chrome));
 }
 
 .overview__item {
@@ -301,6 +325,77 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .esqueleto,
   .status__ponto {
+    animation: none;
+  }
+}
+
+/* ---------- exportação em PDF ----------------------------------------------
+   A camada fica fora da tela em vez de `display: none`: sem caixa de layout o
+   navegador não carrega as imagens, e o PDF sairia com buracos.
+   --------------------------------------------------------------------------- */
+
+.impressao {
+  position: fixed;
+  left: -30000px;
+  top: 0;
+  width: var(--canvas-w);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.impressao__pagina {
+  position: relative;
+  width: var(--canvas-w);
+  height: var(--canvas-h);
+  overflow: hidden;
+}
+
+@media print {
+  /* página do tamanho exato do canvas: 1280x720 px = 13,333 x 7,5 pol a 96 dpi */
+  @page {
+    size: 1280px 720px;
+    margin: 0;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  /* a apresentação em si não vai para o papel — só a camada de impressão */
+  .palco,
+  .chrome,
+  .overview,
+  .dica-girar {
+    display: none !important;
+  }
+
+  .impressao {
+    position: static;
+    left: auto;
+    width: auto;
+    z-index: auto;
+  }
+
+  .impressao__pagina {
+    break-after: page;
+    page-break-after: always;
+    /* o deck inteiro é fundo colorido: sem isto o Chrome imprime tudo branco
+       a menos que o usuário marque "Gráficos de segundo plano" no diálogo */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .impressao__pagina:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* o esqueleto pulsante não tem sentido no papel */
+  .esqueleto {
     animation: none;
   }
 }

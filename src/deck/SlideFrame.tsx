@@ -6,6 +6,17 @@ import { CANVAS_H, CANVAS_W } from './types'
  * janela. Assim cada slide posiciona seus elementos em px absolutos — os
  * mesmos do PPTX (1 polegada = 96 px) — e ainda assim serve qualquer tela.
  */
+/**
+ * Altura reservada à barra de controles, lida do token `--altura-chrome`.
+ * Vem do CSS porque o valor muda por media query (no celular a barra é menor) —
+ * ler daqui evita duas fontes de verdade que saem de sincronia.
+ */
+export function alturaChrome(): number {
+  const bruto = getComputedStyle(document.documentElement).getPropertyValue('--altura-chrome')
+  const n = Number.parseFloat(bruto)
+  return Number.isFinite(n) ? n : 0
+}
+
 export function useEscalaCanvas(): number {
   const [escala, setEscala] = useState(1)
 
@@ -13,8 +24,8 @@ export function useEscalaCanvas(): number {
     const medir = () => {
       const vv = window.visualViewport
       const w = vv?.width ?? window.innerWidth
-      const h = vv?.height ?? window.innerHeight
-      setEscala(Math.min(w / CANVAS_W, h / CANVAS_H))
+      const h = (vv?.height ?? window.innerHeight) - alturaChrome()
+      setEscala(Math.min(w / CANVAS_W, Math.max(h, 1) / CANVAS_H))
     }
     medir()
     window.addEventListener('resize', medir)

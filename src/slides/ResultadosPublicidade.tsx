@@ -6,8 +6,7 @@
  * secundário trazendo PUB-07/PUB-08, que existem na planilha e não estavam no
  * slide. Faixa neon no rodapé, como no original.
  */
-import { formatFull, formatVariacao } from '../lib/numbers'
-import type { Kpi } from '../data/publicidade'
+import type { Kpi } from '../data/kpis'
 import { AvisoDados, ChipPeriodo, Esqueleto, Fundo, MarcaCanto } from './comum'
 
 const CARD_W = 343
@@ -31,7 +30,7 @@ function corDaVariacao(direcao: 'alta' | 'baixa' | 'estavel'): string {
 }
 
 function Rodape({ kpi, mesFechado }: { kpi: Kpi; mesFechado: string | null }) {
-  if (kpi.variacao && kpi.comparacao) {
+  if (kpi.variacao && kpi.variacaoTexto) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
         <span
@@ -48,7 +47,7 @@ function Rodape({ kpi, mesFechado }: { kpi: Kpi; mesFechado: string | null }) {
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {formatVariacao(kpi.variacao)}
+            {kpi.variacaoTexto}
           </div>
           <div style={{ fontSize: 12, color: 'rgb(255 255 255 / 52%)', lineHeight: 1.3 }}>
             {kpi.comparacao}
@@ -103,7 +102,7 @@ function CardKpi({
           <Esqueleto w={190} h={50} style={{ marginBottom: 14 }} />
         ) : (
           <div
-            title={kpi.valor != null ? formatFull(kpi.valor, { moeda: kpi.moeda }) : undefined}
+            title={kpi.valor != null ? kpi.valorCheio : undefined}
             style={{
               fontSize: 48,
               fontWeight: 700,
@@ -180,7 +179,7 @@ function CardInvestimento({
             <Esqueleto w={150} h={32} />
           ) : (
             <div
-              title={k.valor != null ? formatFull(k.valor, { moeda: true }) : undefined}
+              title={k.valor != null ? k.valorCheio : undefined}
               style={{
                 fontSize: 32,
                 fontWeight: 600,
@@ -228,8 +227,17 @@ export function ResultadosPublicidade({
         RESULTADOS DE PUBLICIDADE
       </h2>
 
-      {periodo && (
-        <ChipPeriodo texto={`Acumulado ${periodo}`} style={{ left: 899, top: 30, width: 281, justifyContent: 'center' }} />
+      {/* com erro, a faixa do cabeçalho troca o período pelo aviso: o número em
+          tela pode não ser o de hoje, e isso pesa mais que o período */}
+      {erro ? (
+        <AvisoDados mensagem={erro} style={{ left: 620, top: 22 }} />
+      ) : (
+        periodo && (
+          <ChipPeriodo
+            texto={`Acumulado ${periodo}`}
+            style={{ left: 899, top: 30, width: 281, justifyContent: 'center' }}
+          />
+        )
       )}
 
       {kpis.map((k, i) => (
@@ -271,8 +279,6 @@ export function ResultadosPublicidade({
       >
         Escala nacional com foco regional.
       </div>
-
-      {erro && <AvisoDados mensagem={erro} style={{ left: 42, top: 590 }} />}
     </Fundo>
   )
 }

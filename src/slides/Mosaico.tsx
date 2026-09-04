@@ -3,7 +3,7 @@
  * As cinco peças ficam nas posições exatas do PPTX; a área livre do canto
  * inferior direito recebe o rótulo da seção e a assinatura da marca.
  */
-import { Fundo, Logo } from './comum'
+import { Fundo, Logo, MarcaCanto } from './comum'
 
 interface Peca {
   src: string
@@ -64,11 +64,7 @@ interface Props {
 export function Mosaico({ periodo }: Props) {
   return (
     <Fundo cor="var(--verde-neon)">
-      <img
-        src="/assets/tag-interna.png"
-        alt="Documento interno"
-        style={{ position: 'absolute', left: 1208, top: 12, width: 66, height: 11 }}
-      />
+      <MarcaCanto folha={false} />
 
       {PECAS.map((p) => (
         <img

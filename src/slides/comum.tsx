@@ -4,21 +4,27 @@
  */
 import type { CSSProperties, ReactNode } from 'react'
 
-/** Marcador de classificação + folha, canto superior direito (como no PPTX). */
-export function MarcaCanto() {
+/**
+ * Marcador de classificação + folha, canto superior direito (como no PPTX).
+ * Nos slides de fundo neon a folha some — ela é verde-neon e ficaria invisível,
+ * que é por isso que os layouts de fundo neon do PPTX só trazem a tag.
+ */
+export function MarcaCanto({ folha = true }: { folha?: boolean }) {
   return (
     <>
       <img
         src="/assets/tag-interna.png"
         alt="Documento interno"
-        style={{ position: 'absolute', left: 1208, top: 12, width: 66, height: 11 }}
+        style={{ position: 'absolute', left: 1208, top: 12, width: 66, height: 11, zIndex: 3 }}
       />
-      <img
-        src="/assets/folha.png"
-        alt=""
-        aria-hidden="true"
-        style={{ position: 'absolute', left: 1223, top: 26, width: 39, height: 32 }}
-      />
+      {folha && (
+        <img
+          src="/assets/folha.png"
+          alt=""
+          aria-hidden="true"
+          style={{ position: 'absolute', left: 1223, top: 26, width: 39, height: 32, zIndex: 3 }}
+        />
+      )}
     </>
   )
 }
@@ -40,14 +46,20 @@ export function Logo({
   )
 }
 
-/** Pílula do período coberto — a automação do mês fechado, visível no slide. */
+/**
+ * Pílula do período coberto — a automação do mês fechado, visível no slide.
+ * `tom="escuro"` é para os slides de fundo neon, onde lima sobre verde some.
+ */
 export function ChipPeriodo({
   texto,
+  tom = 'claro',
   style,
 }: {
   texto: string
+  tom?: 'claro' | 'escuro'
   style?: CSSProperties
 }) {
+  const escuro = tom === 'escuro'
   return (
     <span
       style={{
@@ -57,8 +69,8 @@ export function ChipPeriodo({
         gap: 9,
         padding: '7px 16px',
         borderRadius: 99,
-        border: '1px solid rgb(226 255 106 / 40%)',
-        color: 'var(--lima)',
+        border: `1px solid ${escuro ? 'rgb(0 30 19 / 35%)' : 'rgb(226 255 106 / 40%)'}`,
+        color: escuro ? 'var(--verde-noite)' : 'var(--lima)',
         fontSize: 15,
         fontWeight: 500,
         letterSpacing: '0.01em',
@@ -72,7 +84,7 @@ export function ChipPeriodo({
           width: 6,
           height: 6,
           borderRadius: '50%',
-          background: 'var(--verde-neon)',
+          background: escuro ? 'var(--verde-profundo)' : 'var(--verde-neon)',
           flex: 'none',
         }}
       />

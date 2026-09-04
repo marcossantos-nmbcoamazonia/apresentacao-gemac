@@ -223,7 +223,9 @@ export function DivisorPublicidade({ produtos, pracas, periodo, carregando, erro
         )}
       </section>
 
-      {erro && <AvisoDados mensagem={erro} style={{ left: 518, top: 636 }} />}
+      {/* sobre a foto: é a única área livre do slide, e o painel de produtos
+          já ocupa a coluna da direita inteira */}
+      {erro && <AvisoDados mensagem={erro} style={{ left: 24, top: 632, maxWidth: 415 }} />}
     </Fundo>
   )
 }

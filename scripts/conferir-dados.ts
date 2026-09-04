@@ -1,21 +1,21 @@
 /**
- * Confere, pelo terminal, o que o slide vai mostrar — sem abrir o browser.
+ * Confere, pelo terminal, o que os slides vão mostrar — sem abrir o browser.
  *
  *     npm run conferir
  *
- * Usa exatamente as mesmas funções da aplicação (src/data/publicidade.ts), então
- * qualquer mudança na planilha que quebre o parse ou desloque o mês de fechamento
- * aparece aqui. Os valores do deck original de 01/09/2026 ficam como referência.
+ * Usa exatamente as mesmas funções da aplicação (src/data/*.ts), então qualquer
+ * mudança na planilha que quebre o parse ou desloque o mês de fechamento aparece
+ * aqui. Os valores do deck original de 01/09/2026 ficam como referência.
  */
 import { parseAba } from '../src/api/parseSheet'
-import { montarPublicidade } from '../src/data/publicidade'
-import { formatFull, formatVariacao } from '../src/lib/numbers'
+import { ABA_PUBLICIDADE, montarPublicidade } from '../src/data/publicidade'
+import { ABA_DIGITAL, montarDigital, remateDoBloco } from '../src/data/digital'
+import type { Kpi } from '../src/data/kpis'
 
 const BASE = process.env.VITE_API_BASE ?? 'https://nmbcoamazonia-api.vercel.app'
 const SHEET = process.env.VITE_SHEET_ID ?? '12vC5uRnSYAzqlBVKBO8AsQCNuvoVNZkRV8e-1kSAZPg'
-const ABA = '01 PUBLICIDADE'
 
-/** Números impressos no slide 7 do deck de 01/09/2026, para conferência. */
+/** Números impressos no deck de 01/09/2026, para conferência. */
 const REFERENCIA_DECK: Record<string, string> = {
   'PUB-01': '56.775',
   'PUB-02': '317 Mi',
@@ -24,62 +24,81 @@ const REFERENCIA_DECK: Record<string, string> = {
   'PUB-05': '18 Mi',
 }
 
-const resp = await fetch(`${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(ABA)}`)
-if (!resp.ok) {
-  console.error(`API respondeu ${resp.status}`)
-  process.exit(1)
-}
-
-const json = (await resp.json()) as { success: boolean; data?: { values?: string[][] } }
-if (!json.success || !json.data?.values) {
-  console.error('Resposta sem dados')
-  process.exit(1)
-}
-
-const aba = parseAba(json.data.values)
-const dados = montarPublicidade(aba)
-
-if (!dados) {
-  console.error('Nenhum mês com dado na aba — nada a apresentar')
-  process.exit(1)
-}
-
-console.log(`aba .............. ${aba.titulo}`)
-console.log(`ano .............. ${aba.ano}`)
-console.log(`indicadores ...... ${aba.linhas.map((l) => l.id).join(', ')}`)
-console.log(`MÊS FECHADO ...... ${dados.fechado.curto}   (período: ${dados.fechado.periodo})`)
-
+const REGUA = '─'.repeat(100)
 let divergencias = 0
 
-console.log('\nKPIs — acumulado Jan → mês fechado')
-console.log('─'.repeat(96))
-for (const k of [...dados.kpis, ...dados.investimento]) {
+async function buscar(aba: string) {
+  const r = await fetch(`${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(aba)}`)
+  if (!r.ok) throw new Error(`API respondeu ${r.status} para "${aba}"`)
+  const json = (await r.json()) as { success: boolean; data?: { values?: string[][] } }
+  if (!json.success || !json.data?.values) throw new Error(`Resposta sem dados para "${aba}"`)
+  return parseAba(json.data.values)
+}
+
+function linhaKpi(k: Kpi, indent = ''): void {
   const ref = REFERENCIA_DECK[k.id]
   const bate = ref ? (ref === k.formatado ? 'igual ao deck' : `DIFERE do deck (${ref})`) : ''
   if (ref && ref !== k.formatado) divergencias++
 
-  const varTxt = k.variacao
-    ? `${formatVariacao(k.variacao)} ${k.comparacao}`
-    : 'sem base de comparação'
+  const agregado = k.agregacao === 'media' ? 'média ' : ''
+  const varTxt = k.variacaoTexto ? `${k.variacaoTexto} ${k.comparacao}` : 'sem base de comparação'
 
   console.log(
-    `${k.id}  ${k.formatado.padEnd(13)}${formatFull(k.valor, { moeda: k.moeda }).padStart(18)}   ` +
-      `${varTxt.padEnd(28)}${bate}`,
+    `${indent}${k.id.padEnd(8)}${k.formatado.padEnd(13)}` +
+      `${(agregado + k.valorCheio).padStart(22)}   ` +
+      `${varTxt.padEnd(26)}${bate}`,
   )
+}
+
+// ============================ 01 PUBLICIDADE ================================
+const abaPub = await buscar(ABA_PUBLICIDADE)
+const pub = montarPublicidade(abaPub)
+if (!pub) throw new Error('Nenhum mês com dado em 01 PUBLICIDADE')
+
+console.log(`\n${abaPub.titulo}`)
+console.log(`MÊS FECHADO ...... ${pub.fechado.curto}   (período: ${pub.fechado.periodo})`)
+console.log(`indicadores ...... ${abaPub.linhas.map((l) => l.id).join(', ')}`)
+console.log(REGUA)
+for (const k of [...pub.kpis, ...pub.investimento]) {
+  linhaKpi(k)
   if (k.semDadoNoMes) {
-    console.log(`        ↳ sem dado em ${dados.fechado.nome}; série vai até ${k.ultimoMes ?? '—'}`)
+    console.log(`        ↳ sem dado em ${pub.fechado.nome}; série vai até ${k.ultimoMes ?? '—'}`)
   }
 }
+console.log(`\nPUB-09 · ${pub.produtos.length} produtos únicos no período`)
+console.log(`PUB-10 · praças: ${pub.pracas || '(vazio)'}`)
 
-console.log(`\nPUB-09 — produtos trabalhados (${dados.produtos.length} únicos no período)`)
-console.log('─'.repeat(96))
-for (const [i, p] of dados.produtos.entries()) {
-  console.log(`  ${String(i + 1).padStart(2)}. ${p}`)
+// ============================== 02 DIGITAL ==================================
+const abaDig = await buscar(ABA_DIGITAL)
+const dig = montarDigital(abaDig)
+if (!dig) throw new Error('Nenhum mês com dado em 02 DIGITAL')
+
+console.log(`\n\n${abaDig.titulo}`)
+console.log(`MÊS FECHADO ...... ${dig.fechado.curto}   (período: ${dig.fechado.periodo})`)
+console.log(`indicadores ...... ${abaDig.linhas.map((l) => l.id).join(', ')}`)
+
+for (const bloco of dig.blocos) {
+  console.log(`\n  ${bloco.entidade.toUpperCase()}  (${bloco.prefixo}-*)`)
+  console.log(`  ${REGUA.slice(0, 98)}`)
+  for (const card of bloco.cards) {
+    linhaKpi(card.principal, '  ')
+    if (card.secundario) linhaKpi(card.secundario, '    apoio ')
+    if (card.principal.semDadoNoMes && card.principal.ultimoMes) {
+      console.log(
+        `          ↳ sem dado em ${dig.fechado.nome}; série vai até ${card.principal.ultimoMes}`,
+      )
+    }
+  }
+  linhaKpi(bloco.influenciadores, '  ')
+  console.log(`  remate: ${remateDoBloco(bloco)}`)
 }
 
-console.log('\nPUB-10 — praças')
-console.log('─'.repeat(96))
-console.log(`  ${dados.pracas || '(vazio)'}`)
+if (pub.fechado.indice !== dig.fechado.indice) {
+  console.log(
+    `\nATENÇÃO: as abas fecharam em meses diferentes — Publicidade até ${pub.fechado.nome}, ` +
+      `Digital até ${dig.fechado.nome}. A pílula de status acompanha o slide em tela.`,
+  )
+}
 
 console.log(
   divergencias === 0

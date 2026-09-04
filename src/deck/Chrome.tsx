@@ -2,7 +2,9 @@
  * Controles da apresentação. Ficam fora do canvas escalado, então continuam
  * legíveis em qualquer tamanho de tela, e somem sozinhos durante a fala.
  */
-export type EstadoPlanilha = 'ok' | 'carregando' | 'erro'
+import type { FonteSlide } from './types'
+
+export type EstadoPlanilha = FonteSlide['estado']
 
 function haQuantoTempo(ts: number | null): string {
   if (ts == null) return ''
@@ -12,14 +14,7 @@ function haQuantoTempo(ts: number | null): string {
   return `há ${Math.round(s / 3600)} h`
 }
 
-interface StatusProps {
-  estado: EstadoPlanilha
-  /** "Ago/2026" — mês até onde a planilha tem dados */
-  mes: string | null
-  buscadoEm: number | null
-}
-
-export function StatusPlanilha({ estado, mes, buscadoEm }: StatusProps) {
+export function StatusPlanilha({ estado, mes, buscadoEm, aba }: FonteSlide) {
   const texto =
     estado === 'carregando'
       ? 'Lendo a planilha…'
@@ -33,7 +28,7 @@ export function StatusPlanilha({ estado, mes, buscadoEm }: StatusProps) {
       data-estado={estado}
       title={
         estado === 'ok'
-          ? `Lido da aba 01 PUBLICIDADE ${haQuantoTempo(buscadoEm)}. Tecle R para atualizar.`
+          ? `Lido da aba ${aba ?? 'da planilha'} ${haQuantoTempo(buscadoEm)}. Tecle R para atualizar.`
           : undefined
       }
     >
@@ -50,10 +45,13 @@ interface ChromeProps {
   indice: number
   total: number
   oculto: boolean
-  status: StatusProps
+  status: FonteSlide
   aoAbrirOverview: () => void
   aoAlternarTelaCheia: () => void
   telaCheia: boolean
+  aoExportarPdf: () => void
+  /** true enquanto as imagens da exportação carregam */
+  preparandoPdf: boolean
 }
 
 export function Chrome({
@@ -64,6 +62,8 @@ export function Chrome({
   aoAbrirOverview,
   aoAlternarTelaCheia,
   telaCheia,
+  aoExportarPdf,
+  preparandoPdf,
 }: ChromeProps) {
   return (
     <div className="chrome" data-oculto={oculto}>
@@ -79,6 +79,14 @@ export function Chrome({
 
       <button className="chrome__botao" onClick={aoAbrirOverview} title="Grade de slides (O)">
         Slides
+      </button>
+      <button
+        className="chrome__botao"
+        onClick={aoExportarPdf}
+        disabled={preparandoPdf}
+        title={`Exportar os ${total} slides em PDF (P)`}
+      >
+        {preparandoPdf ? 'Gerando…' : 'PDF'}
       </button>
       <button
         className="chrome__botao"

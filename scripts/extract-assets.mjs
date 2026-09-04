@@ -33,6 +33,13 @@ const MEDIA = {
   'image19.jpg': 'mosaico-3.jpg',
   'image23.jpg': 'mosaico-4.jpg',
   'image22.jpg': 'mosaico-5.jpg',
+  // slide 11 — mosaico digital (capturas de redes sociais)
+  'image46.jpg': 'digital-1.jpg',
+  'image32.jpg': 'digital-2.jpg',
+  'image37.jpg': 'digital-3.jpg',
+  'image36.jpg': 'digital-4.jpg',
+  'image39.jpg': 'digital-5.jpg',
+  'image38.jpg': 'digital-6.jpg',
 }
 
 /** Lê o diretório central do zip e devolve { caminho -> Buffer } das entradas pedidas. */
