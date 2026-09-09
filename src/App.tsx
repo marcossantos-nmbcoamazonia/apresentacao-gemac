@@ -3,8 +3,10 @@ import { Deck } from './deck/Deck'
 import type { FonteSlide, SlideDef } from './deck/types'
 import { usePublicidade } from './data/usePublicidade'
 import { useDigital } from './data/useDigital'
+import { useEventos } from './data/useEventos'
 import { ABA_PUBLICIDADE, KPIS_INVESTIMENTO, KPIS_PRINCIPAIS } from './data/publicidade'
 import { ABA_DIGITAL, BLOCOS_VAZIOS, remateDoBloco } from './data/digital'
+import { ABA_EVENTOS, totalAcoesDiversas } from './data/eventos'
 import { kpiVazio } from './data/kpis'
 import { formatCompact } from './lib/numbers'
 import type { MesFechado } from './data/resolveClosedMonth'
@@ -15,6 +17,10 @@ import { Mosaico } from './slides/Mosaico'
 import { PresencaDigital } from './slides/PresencaDigital'
 import { ResultadosDigitais } from './slides/ResultadosDigitais'
 import { MosaicoDigital } from './slides/MosaicoDigital'
+import { DivisorEventos } from './slides/DivisorEventos'
+import { AgendaEventos } from './slides/AgendaEventos'
+import { ProjetosAprovados } from './slides/ProjetosAprovados'
+import { MosaicoEventos } from './slides/MosaicoEventos'
 
 /** Enquanto a planilha não responde, o layout já se monta com os rótulos certos. */
 const KPIS_VAZIOS = KPIS_PRINCIPAIS.map((d) => kpiVazio(d))
@@ -31,6 +37,7 @@ function fechadoMaisRecente(...meses: (MesFechado | undefined)[]): MesFechado | 
 export default function App() {
   const pub = usePublicidade()
   const dig = useDigital()
+  const evt = useEventos()
 
   const fontePub: FonteSlide = {
     estado: estadoDe(pub.erro, pub.carregando),
@@ -43,6 +50,12 @@ export default function App() {
     mes: dig.dados?.fechado.curto ?? null,
     buscadoEm: dig.buscadoEm,
     aba: ABA_DIGITAL,
+  }
+  const fonteEvt: FonteSlide = {
+    estado: estadoDe(evt.erro, evt.carregando),
+    mes: evt.dados?.curto ?? null,
+    buscadoEm: evt.buscadoEm,
+    aba: ABA_EVENTOS,
   }
 
   const fechadoGeral = fechadoMaisRecente(pub.dados?.fechado, dig.dados?.fechado)
@@ -70,7 +83,8 @@ export default function App() {
   const recarregar = useCallback(() => {
     pub.recarregar()
     dig.recarregar()
-  }, [pub, dig])
+    evt.recarregar()
+  }, [pub, dig, evt])
 
   const slides = useMemo<SlideDef[]>(
     () => [
@@ -154,6 +168,45 @@ export default function App() {
         fonte: fonteDig,
         render: () => <MosaicoDigital periodo={periodoDig} />,
       },
+
+      // ---- Eventos ---------------------------------------------------------
+      {
+        id: 'eventos-abertura',
+        titulo: 'Eventos e Feiras — abertura',
+        fonte: fonteEvt,
+        render: () => (
+          <DivisorEventos dados={evt.dados} carregando={evt.carregando} erro={evt.erro} />
+        ),
+      },
+      {
+        id: 'eventos-agenda',
+        titulo: 'Agenda do período',
+        fonte: fonteEvt,
+        render: () => (
+          <AgendaEventos dados={evt.dados} carregando={evt.carregando} erro={evt.erro} />
+        ),
+      },
+      {
+        id: 'eventos-projetos',
+        titulo: 'Projetos aprovados',
+        fonte: fonteEvt,
+        render: () => (
+          <ProjetosAprovados dados={evt.dados} carregando={evt.carregando} erro={evt.erro} />
+        ),
+      },
+      {
+        id: 'eventos-registro',
+        titulo: 'Eventos — registro visual',
+        fonte: fonteEvt,
+        render: () => (
+          <MosaicoEventos
+            periodo={evt.dados?.periodo ?? null}
+            feiras={evt.dados?.feiras.length ?? 0}
+            diversas={evt.dados ? totalAcoesDiversas(evt.dados) : 0}
+            projetos={evt.dados?.projetos.length ?? 0}
+          />
+        ),
+      },
     ],
     [
       pub.dados,
@@ -169,6 +222,10 @@ export default function App() {
       criadores,
       fontePub,
       fonteDig,
+      fonteEvt,
+      evt.dados,
+      evt.carregando,
+      evt.erro,
     ],
   )
 
@@ -179,7 +236,12 @@ export default function App() {
         fechadoGeral ? ` - ${fechadoGeral.periodo.replace(/\s*–\s*/, '-')}` : ''
       }`}
       status={{
-        estado: pub.erro || dig.erro ? 'erro' : pub.carregando || dig.carregando ? 'carregando' : 'ok',
+        estado:
+          pub.erro || dig.erro || evt.erro
+            ? 'erro'
+            : pub.carregando || dig.carregando || evt.carregando
+              ? 'carregando'
+              : 'ok',
         mes: fechadoGeral?.curto ?? null,
         buscadoEm: pub.buscadoEm,
         aba: 'planilha de fechamento',

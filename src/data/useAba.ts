@@ -1,13 +1,16 @@
 /**
- * Busca + parse de uma aba da planilha. Genérico: serve 01 PUBLICIDADE,
- * 02 DIGITAL, 03 EVENTOS, 05 IMPRENSA... sem alteração.
+ * Busca de uma aba da planilha + parse.
+ *
+ * `useAba` serve as abas em formato indicador × mês (01 PUBLICIDADE, 02 DIGITAL,
+ * 05 IMPRENSA, 06 CENTRO CULTURAL). `useRange` é a versão genérica, para abas
+ * com outro formato — 03 EVENTOS é um registro por linha e tem parser próprio.
  */
 import { useCallback, useEffect, useState } from 'react'
 import { fetchRange } from '../api/client'
 import { parseAba, type AbaParseada } from '../api/parseSheet'
 
-export interface EstadoAba {
-  dados: AbaParseada | null
+export interface EstadoRange<T> {
+  dados: T | null
   carregando: boolean
   erro: string | null
   /** quando a resposta em uso foi buscada na rede */
@@ -15,8 +18,14 @@ export interface EstadoAba {
   recarregar: () => void
 }
 
-export function useAba(range: string): EstadoAba {
-  const [dados, setDados] = useState<AbaParseada | null>(null)
+export type EstadoAba = EstadoRange<AbaParseada>
+
+/**
+ * `parser` entra nas dependências do efeito, então precisa ser uma referência
+ * estável — use uma função de módulo, não uma criada no corpo do componente.
+ */
+export function useRange<T>(range: string, parser: (values: string[][]) => T): EstadoRange<T> {
+  const [dados, setDados] = useState<T | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [buscadoEm, setBuscadoEm] = useState<number | null>(null)
@@ -34,7 +43,7 @@ export function useAba(range: string): EstadoAba {
     fetchRange(range, { signal: ac.signal, forcar: gatilho > 0 })
       .then((r) => {
         if (!vivo) return
-        setDados(parseAba(r.values))
+        setDados(parser(r.values))
         setBuscadoEm(r.buscadoEm)
         setErro(null)
       })
@@ -50,7 +59,11 @@ export function useAba(range: string): EstadoAba {
       vivo = false
       ac.abort()
     }
-  }, [range, gatilho])
+  }, [range, gatilho, parser])
 
   return { dados, carregando, erro, buscadoEm, recarregar }
+}
+
+export function useAba(range: string): EstadoAba {
+  return useRange(range, parseAba)
 }

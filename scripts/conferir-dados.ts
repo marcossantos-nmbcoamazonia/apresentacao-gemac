@@ -8,8 +8,10 @@
  * aqui. Os valores do deck original de 01/09/2026 ficam como referência.
  */
 import { parseAba } from '../src/api/parseSheet'
+import { parseEventos } from '../src/api/parseEventos'
 import { ABA_PUBLICIDADE, montarPublicidade } from '../src/data/publicidade'
 import { ABA_DIGITAL, montarDigital, remateDoBloco } from '../src/data/digital'
+import { ABA_EVENTOS, montarEventos, totalAcoesDiversas } from '../src/data/eventos'
 import type { Kpi } from '../src/data/kpis'
 
 const BASE = process.env.VITE_API_BASE ?? 'https://nmbcoamazonia-api.vercel.app'
@@ -27,12 +29,16 @@ const REFERENCIA_DECK: Record<string, string> = {
 const REGUA = '─'.repeat(100)
 let divergencias = 0
 
-async function buscar(aba: string) {
+async function valores(aba: string): Promise<string[][]> {
   const r = await fetch(`${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(aba)}`)
   if (!r.ok) throw new Error(`API respondeu ${r.status} para "${aba}"`)
   const json = (await r.json()) as { success: boolean; data?: { values?: string[][] } }
   if (!json.success || !json.data?.values) throw new Error(`Resposta sem dados para "${aba}"`)
-  return parseAba(json.data.values)
+  return json.data.values
+}
+
+async function buscar(aba: string) {
+  return parseAba(await valores(aba))
 }
 
 function linhaKpi(k: Kpi, indent = ''): void {
@@ -91,6 +97,49 @@ for (const bloco of dig.blocos) {
   }
   linhaKpi(bloco.influenciadores, '  ')
   console.log(`  remate: ${remateDoBloco(bloco)}`)
+}
+
+// ============================== 03 EVENTOS ==================================
+const abaEvt = parseEventos(await valores(ABA_EVENTOS))
+const evt = montarEventos(abaEvt, pub.fechado.ano)
+if (!evt) throw new Error('Nenhum evento com nome em 03 EVENTOS')
+
+console.log(`\n\n${abaEvt.titulo}`)
+console.log(`PERÍODO .......... ${evt.periodo}`)
+console.log(
+  `registros ........ ${abaEvt.eventos.length} com nome · ${abaEvt.vazias} linhas reservadas em branco`,
+)
+console.log(REGUA)
+console.log(`  Feiras realizadas ....... ${String(evt.feiras.length).padStart(3)}`)
+console.log(
+  `  Ações diversas .......... ${String(totalAcoesDiversas(evt)).padStart(3)}` +
+    `   (${evt.esportivos.length} esportivas · ${evt.institucionais.length} institucionais)`,
+)
+if (evt.culturais.length) console.log(`  Culturais ............... ${evt.culturais.length}`)
+console.log(`  Projetos aprovados ...... ${String(evt.projetos.length).padStart(3)}`)
+console.log(`  Investimento aprovado ... ${evt.investimentoCheio}`)
+
+if (evt.usouDocumento) {
+  console.log(
+    '\n  AVISO: a coluna "Tipo" está vazia — a classificação veio da ponte transcrita\n' +
+      '  do COPAC 2026 - 1S26 (src/data/classificacaoEventos.ts). Preencher "Tipo" na\n' +
+      '  planilha faz a ponte deixar de ser usada.',
+  )
+}
+if (evt.aClassificar.length) {
+  console.log(`  ${evt.aClassificar.length} evento(s) sem tipo e fora da ponte:`)
+  for (const e of evt.aClassificar) console.log(`      ${e.id} ${e.nome}`)
+}
+
+console.log('\n  Lacunas obrigatórias da própria aba:')
+for (const p of [evt.publico, evt.negocios]) {
+  console.log(`    ${p.rotulo.padEnd(24)} ${p.preenchidos}/${p.esperados} preenchidos → ${p.formatado}`)
+}
+console.log(`    ${'UF'.padEnd(24)} ${evt.ufs.length} informada(s)`)
+
+console.log('\n  Agenda:')
+for (const g of evt.porMes) {
+  console.log(`    ${g.extenso.padEnd(10)} ${String(g.eventos.length).padStart(2)} eventos`)
 }
 
 if (pub.fechado.indice !== dig.fechado.indice) {

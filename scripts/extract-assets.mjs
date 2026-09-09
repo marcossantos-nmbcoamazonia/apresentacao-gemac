@@ -33,6 +33,12 @@ const MEDIA = {
   'image19.jpg': 'mosaico-3.jpg',
   'image23.jpg': 'mosaico-4.jpg',
   'image22.jpg': 'mosaico-5.jpg',
+  // slide 16 — "o Banco presente onde a Amazônia acontece" (eventos e feiras)
+  'image50.jpg': 'eventos-1.jpg',
+  'image47.jpg': 'eventos-2.jpg',
+  'image49.jpg': 'eventos-3.jpg',
+  'image51.jpg': 'eventos-4.jpg',
+  'image52.jpg': 'eventos-5.jpg',
   // slide 11 — mosaico digital (capturas de redes sociais)
   'image46.jpg': 'digital-1.jpg',
   'image32.jpg': 'digital-2.jpg',
