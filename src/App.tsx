@@ -6,7 +6,7 @@ import { useDigital } from './data/useDigital'
 import { useEventos } from './data/useEventos'
 import { ABA_PUBLICIDADE, KPIS_INVESTIMENTO, KPIS_PRINCIPAIS } from './data/publicidade'
 import { ABA_DIGITAL, BLOCOS_VAZIOS, remateDoBloco } from './data/digital'
-import { ABA_EVENTOS, totalAcoesDiversas } from './data/eventos'
+import { ABA_EVENTOS } from './data/eventos'
 import { kpiVazio } from './data/kpis'
 import { formatCompact } from './lib/numbers'
 import type { MesFechado } from './data/resolveClosedMonth'
@@ -18,7 +18,6 @@ import { ResultadosDigitais } from './slides/ResultadosDigitais'
 import { DivisorEventos } from './slides/DivisorEventos'
 import { AgendaEventos } from './slides/AgendaEventos'
 import { ProjetosAprovados } from './slides/ProjetosAprovados'
-import { MosaicoEventos } from './slides/MosaicoEventos'
 
 /** Enquanto a planilha não responde, o layout já se monta com os rótulos certos. */
 const KPIS_VAZIOS = KPIS_PRINCIPAIS.map((d) => kpiVazio(d))
@@ -178,19 +177,6 @@ export default function App() {
         fonte: fonteEvt,
         render: () => (
           <ProjetosAprovados dados={evt.dados} carregando={evt.carregando} erro={evt.erro} />
-        ),
-      },
-      {
-        id: 'eventos-registro',
-        titulo: 'Eventos — registro visual',
-        fonte: fonteEvt,
-        render: () => (
-          <MosaicoEventos
-            periodo={evt.dados?.periodo ?? null}
-            feiras={evt.dados?.feiras.length ?? 0}
-            diversas={evt.dados ? totalAcoesDiversas(evt.dados) : 0}
-            projetos={evt.dados?.projetos.length ?? 0}
-          />
         ),
       },
     ],

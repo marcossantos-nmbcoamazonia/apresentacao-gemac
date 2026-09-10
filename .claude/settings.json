@@ -44,7 +44,8 @@
       "Bash(grep -n \"id: '\\\\|titulo: '\\\\|titulo: \\\\`\" src/App.tsx)",
       "Bash(git rm *)",
       "Bash(node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/cdp-pdf.mjs 'http://localhost:4173/#/1' C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/deck-10.pdf)",
-      "Bash(OUT=C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/rm-shots node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/shot.mjs http://localhost:4173/ 4 8)"
+      "Bash(OUT=C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/rm-shots node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/shot.mjs http://localhost:4173/ 4 8)",
+      "Bash(node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/cdp-pdf.mjs 'http://localhost:4173/#/1' C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/deck-9.pdf)"
     ]
   }
 }
