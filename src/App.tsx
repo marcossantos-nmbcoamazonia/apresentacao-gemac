@@ -13,10 +13,8 @@ import type { MesFechado } from './data/resolveClosedMonth'
 import { Capa } from './slides/Capa'
 import { DivisorPublicidade } from './slides/DivisorPublicidade'
 import { ResultadosPublicidade } from './slides/ResultadosPublicidade'
-import { Mosaico } from './slides/Mosaico'
 import { PresencaDigital } from './slides/PresencaDigital'
 import { ResultadosDigitais } from './slides/ResultadosDigitais'
-import { MosaicoDigital } from './slides/MosaicoDigital'
 import { DivisorEventos } from './slides/DivisorEventos'
 import { AgendaEventos } from './slides/AgendaEventos'
 import { ProjetosAprovados } from './slides/ProjetosAprovados'
@@ -124,12 +122,6 @@ export default function App() {
           />
         ),
       },
-      {
-        id: 'publicidade-criativos',
-        titulo: 'Criativos em veiculação',
-        fonte: fontePub,
-        render: () => <Mosaico periodo={periodoPub} />,
-      },
 
       // ---- Digital ---------------------------------------------------------
       {
@@ -162,12 +154,6 @@ export default function App() {
           />
         ),
       })),
-      {
-        id: 'digital-publicacoes',
-        titulo: 'Publicações e criadores',
-        fonte: fonteDig,
-        render: () => <MosaicoDigital periodo={periodoDig} />,
-      },
 
       // ---- Eventos ---------------------------------------------------------
       {
