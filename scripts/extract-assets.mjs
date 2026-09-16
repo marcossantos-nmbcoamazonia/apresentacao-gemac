@@ -25,27 +25,18 @@ const MEDIA = {
   'image1.png': 'logo-basa-claro.png', // variante usada na capa (fundo escuro)
   'image2.png': 'folha.png', // símbolo isolado
   'image3.png': 'tag-interna.png', // marcador #INTERNA
-  // slide 6 — divisor Publicidade
-  'image20.jpg': 'publicidade-lateral.jpg',
-  // slide 8 — mosaico de criativos
-  'image11.jpg': 'mosaico-1.jpg',
-  'image17.jpg': 'mosaico-2.jpg',
-  'image19.jpg': 'mosaico-3.jpg',
-  'image23.jpg': 'mosaico-4.jpg',
-  'image22.jpg': 'mosaico-5.jpg',
-  // slide 16 — "o Banco presente onde a Amazônia acontece" (eventos e feiras)
-  'image50.jpg': 'eventos-1.jpg',
-  'image47.jpg': 'eventos-2.jpg',
-  'image49.jpg': 'eventos-3.jpg',
-  'image51.jpg': 'eventos-4.jpg',
-  'image52.jpg': 'eventos-5.jpg',
-  // slide 11 — mosaico digital (capturas de redes sociais)
-  'image46.jpg': 'digital-1.jpg',
-  'image32.jpg': 'digital-2.jpg',
-  'image37.jpg': 'digital-3.jpg',
-  'image36.jpg': 'digital-4.jpg',
-  'image39.jpg': 'digital-5.jpg',
-  'image38.jpg': 'digital-6.jpg',
+  // fotografia editorial — as três nunca foram usadas no deck original
+  'image5.jpg': 'retrato-1.jpg', // mulher em luz dourada, olhar para cima (capa)
+  'image64.jpg': 'retrato-2.jpg', // senhora de chapéu de palha sobre céu azul
+  'image20.jpg': 'produtores.jpg', // produtores no campo ao entardecer
+  // recorte botânico com canal alfa (1920x821 RGBA) — assinatura do rodapé
+  'image18.png': 'folhagem.png',
+  // peças de campanha, usadas só desfocadas ao fundo
+  'image11.jpg': 'mosaico-1.jpg', // Custeio Agrícola e Pecuário
+  'image17.jpg': 'mosaico-2.jpg', // Custeio — pesca e aquicultura
+  'image19.jpg': 'mosaico-3.jpg', // Custeio — dendê
+  'image23.jpg': 'mosaico-4.jpg', // Capital de Giro (stories)
+  'image22.jpg': 'mosaico-5.jpg', // Maquininha
 }
 
 /** Lê o diretório central do zip e devolve { caminho -> Buffer } das entradas pedidas. */

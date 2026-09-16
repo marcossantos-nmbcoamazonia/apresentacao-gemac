@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from 'react'
 import { alturaChrome } from './SlideFrame'
+import { ContextoModoEstatico } from './modoEstatico'
 import { CANVAS_H, CANVAS_W, type SlideDef } from './types'
 
 const GAP = 22
@@ -64,8 +65,9 @@ export function OverviewGrid({ slides, indice, aoEscolher, aoFechar }: Props) {
           }}
           style={{ width: CANVAS_W * escala, height: CANVAS_H * escala }}
         >
+          {/* estático: dez slides contando ao mesmo tempo seria ruído puro */}
           <div className="overview__miniatura" style={{ transform: `scale(${escala})` }}>
-            {s.render()}
+            <ContextoModoEstatico.Provider value={true}>{s.render()}</ContextoModoEstatico.Provider>
           </div>
           <span className="overview__rotulo">
             {i + 1}. {s.titulo}

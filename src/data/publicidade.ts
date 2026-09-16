@@ -9,6 +9,7 @@
 import { MESES, porId, type AbaParseada } from '../api/parseSheet'
 import { achatarCelula, unirListas } from '../lib/listas'
 import { montarKpi, type DefKpi, type Kpi } from './kpis'
+import { analisarPublicidade, type AnalisePublicidade } from './publicidadeAnalise'
 import { resolveClosedMonth, ultimoMesDoIndicador, type MesFechado } from './resolveClosedMonth'
 
 export const ABA_PUBLICIDADE = '01 PUBLICIDADE'
@@ -35,6 +36,8 @@ export interface DadosPublicidade {
   produtos: string[]
   /** PUB-10, valor do mês fechado (ou do último mês com dado) */
   pracas: string
+  /** séries mensais e métricas derivadas — ver publicidadeAnalise.ts */
+  analise: AnalisePublicidade
 }
 
 export function montarPublicidade(aba: AbaParseada): DadosPublicidade | null {
@@ -58,5 +61,12 @@ export function montarPublicidade(aba: AbaParseada): DadosPublicidade | null {
     pracas = i >= 0 ? achatarCelula(linhaPracas.meses[MESES[i]]) : ''
   }
 
-  return { fechado, kpis, investimento, produtos, pracas }
+  return {
+    fechado,
+    kpis,
+    investimento,
+    produtos,
+    pracas,
+    analise: analisarPublicidade(aba, fechado, pracas),
+  }
 }

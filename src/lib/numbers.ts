@@ -108,3 +108,36 @@ export function variacaoEmPontos(atual: number | null, anterior: number | null):
 export function formatPontos(v: Variacao): string {
   return `${seta(v.direcao)} ${nf(1).format(Math.abs(v.pct))} p.p.`
 }
+
+/**
+ * Formatador de escala FIXA, travada pelo valor de destino.
+ *
+ * `formatCompact` escolhe a unidade a cada chamada, o que é certo para um valor
+ * parado e péssimo para um número que conta de 0 até o alvo: a unidade trocaria
+ * no meio do caminho ("1.234" → "45 Mil" → "12 Mi" → "317 Mi"). Aqui a unidade
+ * sai do alvo uma única vez e só o dígito se move.
+ */
+export function formatadorFixo(alvo: number, opts: { moeda?: boolean } = {}): (n: number) => string {
+  const prefixo = opts.moeda ? 'R$ ' : ''
+  const abs = Math.abs(alvo)
+
+  let divisor = 1
+  let sufixo = ''
+  let casas = 0
+
+  if (abs >= 1e9) {
+    divisor = 1e9
+    sufixo = ' Bi'
+    casas = 1
+  } else if (abs >= 1e6) {
+    divisor = 1e6
+    sufixo = ' Mi'
+    // abaixo de 10 na unidade a casa decimal carrega informação real
+    casas = opts.moeda || abs < 1e7 ? 1 : 0
+  } else if (abs >= 1e5) {
+    divisor = 1e3
+    sufixo = ' Mil'
+  }
+
+  return (n: number) => `${prefixo}${nf(casas).format(n / divisor)}${sufixo}`
+}
