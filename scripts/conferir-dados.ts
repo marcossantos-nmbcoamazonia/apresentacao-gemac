@@ -142,3 +142,18 @@ console.log(
     ? '\nTodos os KPIs de referência batem com o deck de 01/09/2026.\n'
     : `\n${divergencias} KPI(s) divergem do deck — esperado se a planilha avançou de mês.\n`,
 )
+
+// ------------------------- base do CPL (lista chumbada) ---------------------
+console.log(`\nBASE DO CPL — campanhas com meta de lead`)
+console.log(REGUA)
+for (const c of a.campanhasLead) {
+  console.log(`  PI ${c.pi.padEnd(9)}${('R$ ' + br(c.investimento, 2)).padStart(18)}  ${c.nome} (${c.agencia})`)
+}
+console.log(`  ${''.padEnd(9)}${('R$ ' + br(a.investimentoLead, 2)).padStart(18)}  TOTAL`)
+if (a.leadDesatualizado) {
+  console.log(
+    `\n  ATENÇÃO: lista conferida até ${a.leadConferidoAte}, planilha fechou ${pub.fechado.curto}.\n` +
+      `  Os leads do mês novo entram no CPL mas o investimento dele não — o CPL está otimista.\n` +
+      `  Confira os PIs do período e atualize src/data/campanhasLead.ts (inclusive CONFERIDO_ATE).`,
+  )
+}

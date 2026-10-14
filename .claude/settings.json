@@ -50,7 +50,12 @@
       "Bash(OUT=__TRACKED_VAR__/ed node __TRACKED_VAR__/shot.mjs http://localhost:4173/ 2 3 6 7 8 9 10)",
       "Bash(OUT=__TRACKED_VAR__/ed node __TRACKED_VAR__/shot.mjs http://localhost:4173/ 2 3 6 9)",
       "Bash(node __TRACKED_VAR__/cdp-pdf.mjs 'http://localhost:4173/#/1' __TRACKED_VAR__/deck-pub.pdf)",
-      "Bash(node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/cdp-verpdf.mjs 'file:///C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/deck-pub.pdf#page=4' C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/ed/pdf-check.png)"
+      "Bash(node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/cdp-verpdf.mjs 'file:///C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/deck-pub.pdf#page=4' C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/ed/pdf-check.png)",
+      "Bash(curl -s \"https://nmbcoamazonia-api.vercel.app/google/sheets/12vC5uRnSYAzqlBVKBO8AsQCNuvoVNZkRV8e-1kSAZPg/data?range=01%20PUBLICIDADE\")",
+      "Bash(python -I -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"preview %{http_code}\\\\n\" http://localhost:4173/)",
+      "Bash(OUT=C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/ed node C:/Users/marco/AppData/Local/Temp/claude/c--Users-marco-OneDrive-Desktop-GOON-N-cleo-de-M-dia-Banco-da-Amaz-nia-copac-apresentacao-copac/2913d1f3-a5ef-4d5d-819c-3691ccd2d2d9/scratchpad/shot.mjs http://localhost:4173/ 6)",
+      "Bash(OUT=__TRACKED_VAR__/ed node __TRACKED_VAR__/shot.mjs http://localhost:4173/ 6)"
     ]
   }
 }

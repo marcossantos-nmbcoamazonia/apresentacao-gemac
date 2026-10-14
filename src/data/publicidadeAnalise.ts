@@ -11,6 +11,12 @@
 import { MESES, porId, type AbaParseada, type Mes } from '../api/parseSheet'
 import { parseBR } from '../lib/numbers'
 import { chaveLista, itensDaCelula } from '../lib/listas'
+import {
+  CAMPANHAS_LEAD,
+  CONFERIDO_ATE,
+  INVESTIMENTO_LEAD,
+  type CampanhaLead,
+} from './campanhasLead'
 import type { MesFechado } from './resolveClosedMonth'
 
 /** Um ponto da série: o mês e o valor, `null` quando a célula está vazia. */
@@ -100,6 +106,17 @@ export interface AnalisePublicidade {
   /** mídia + produção */
   investimentoTotal: number
   investimentoPartes: { rotulo: string; valor: number; participacao: number }[]
+  /** campanhas com meta de lead e a soma delas — numerador do CPL */
+  campanhasLead: CampanhaLead[]
+  investimentoLead: number
+  /**
+   * A planilha fechou um mês além do último conferido na lista de campanhas:
+   * os leads do mês novo entram no CPL, o investimento dele não. O CPL fica
+   * otimista até alguém conferir os PIs do mês.
+   */
+  leadDesatualizado: boolean
+  /** "Ago/2026" — até onde a lista de campanhas foi conferida */
+  leadConferidoAte: string
   ctr: Derivada
   cpl: Derivada
   cpm: Derivada
@@ -197,7 +214,10 @@ export function analisarPublicidade(
 
   const ctrValor =
     series.impressoes.total > 0 ? (series.cliques.total / series.impressoes.total) * 100 : null
-  const cplValor = series.leads.total > 0 ? series.midia.total / series.leads.total : null
+  // CPL só fecha se numerador e denominador cobrirem as MESMAS campanhas: os
+  // leads vêm só de Capital de Giro e Custeio Agrícola (ressalva da própria
+  // planilha em PUB-01), então o investimento também tem que ser só o delas.
+  const cplValor = series.leads.total > 0 ? INVESTIMENTO_LEAD / series.leads.total : null
   const cpmValor =
     series.impressoes.total > 0 ? series.midia.total / (series.impressoes.total / 1000) : null
 
@@ -213,16 +233,19 @@ export function analisarPublicidade(
     rotulo: 'Custo por lead',
     valor: cplValor,
     formatado: cplValor == null ? '—' : `R$ ${nf(cplValor, 2)}`,
-    conta: `R$ ${nf(series.midia.total)} de mídia ÷ ${nf(series.leads.total)} leads`,
-    leitura: 'Considera só o investimento de mídia, sem produção',
+    conta:
+      `R$ ${nf(INVESTIMENTO_LEAD)} em ${CAMPANHAS_LEAD.length} campanhas ` +
+      `÷ ${nf(series.leads.total)} leads`,
+    leitura: 'Só as campanhas com meta de lead: Capital de Giro e Custeio Agrícola',
   }
 
   const cpm: Derivada = {
     rotulo: 'CPM',
     valor: cpmValor,
     formatado: cpmValor == null ? '—' : `R$ ${nf(cpmValor, 2)}`,
+    // aqui o total de mídia É o certo: as impressões vêm de todas as campanhas
     conta: `R$ ${nf(series.midia.total)} de mídia ÷ ${nf(series.impressoes.total / 1000)} mil impressões`,
-    leitura: 'Custo por mil impressões digitais',
+    leitura: 'Custo por mil impressões, sobre toda a mídia veiculada',
   }
 
   // CTR mês a mês: só existe onde os dois indicadores têm valor no mesmo mês
@@ -245,6 +268,10 @@ export function analisarPublicidade(
     alcancePartes,
     investimentoTotal,
     investimentoPartes,
+    campanhasLead: CAMPANHAS_LEAD,
+    investimentoLead: INVESTIMENTO_LEAD,
+    leadDesatualizado: fechado.indice > CONFERIDO_ATE.indice,
+    leadConferidoAte: `${CONFERIDO_ATE.nome}/${CONFERIDO_ATE.ano}`,
     ctr,
     cpl,
     cpm,
