@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Deck } from './deck/Deck'
 import type { FonteSlide, SlideDef } from './deck/types'
 import { usePublicidade } from './data/usePublicidade'
+import { useComparativo } from './data/useComparativo'
 import { ABA_PUBLICIDADE } from './data/publicidade'
 import { ContextoErro } from './slides/editorial'
 import { Capa } from './slides/Capa'
@@ -14,9 +15,11 @@ import { Investimento } from './slides/Investimento'
 import { Produtos } from './slides/Produtos'
 import { Pracas } from './slides/Pracas'
 import { Fechamento } from './slides/Fechamento'
+import { Comparativo } from './slides/Comparativo'
 
 export default function App() {
-  const { dados, carregando, erro, buscadoEm, recarregar } = usePublicidade()
+  const { dados, aba, carregando, erro, buscadoEm, recarregar } = usePublicidade()
+  const comparativo = useComparativo(aba, dados?.fechado ?? null)
 
   const fonte: FonteSlide = {
     estado: erro ? 'erro' : carregando ? 'carregando' : 'ok',
@@ -24,6 +27,28 @@ export default function App() {
     buscadoEm,
     aba: ABA_PUBLICIDADE,
   }
+
+  // o comparativo depende das duas abas: qualquer uma fora do ar é erro na pílula
+  const erroComparativo = erro ?? comparativo.erro
+  const fonteComparativo: FonteSlide = {
+    estado: erroComparativo
+      ? 'erro'
+      : carregando || comparativo.carregando
+        ? 'carregando'
+        : 'ok',
+    mes: dados?.fechado.curto ?? null,
+    buscadoEm:
+      buscadoEm != null && comparativo.buscadoEm != null
+        ? Math.min(buscadoEm, comparativo.buscadoEm)
+        : null,
+    aba: comparativo.aba ? `${ABA_PUBLICIDADE} e ${comparativo.aba}` : ABA_PUBLICIDADE,
+  }
+
+  const recarregarComparativo = comparativo.recarregar
+  const recarregarTudo = useCallback(() => {
+    recarregar()
+    recarregarComparativo()
+  }, [recarregar, recarregarComparativo])
 
   const periodo = dados?.fechado.periodo ?? null
 
@@ -74,8 +99,18 @@ export default function App() {
         fonte,
         render: () => <Fechamento dados={dados} />,
       },
+      {
+        id: 'comparativo',
+        titulo: 'Comparativo anual',
+        fonte: fonteComparativo,
+        render: () => (
+          <ContextoErro.Provider value={erroComparativo}>
+            <Comparativo dados={comparativo.dados} periodo={periodo} />
+          </ContextoErro.Provider>
+        ),
+      },
     ],
-    [dados, carregando, periodo, fonte],
+    [dados, carregando, periodo, fonte, fonteComparativo, comparativo.dados, erroComparativo],
   )
 
   return (
@@ -86,7 +121,7 @@ export default function App() {
           periodo ? ` - ${periodo.replace(/\s*–\s*/, '-')}` : ''
         }`}
         status={fonte}
-        aoRecarregar={recarregar}
+        aoRecarregar={recarregarTudo}
       />
     </ContextoErro.Provider>
   )

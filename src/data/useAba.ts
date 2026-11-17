@@ -23,8 +23,14 @@ export type EstadoAba = EstadoRange<AbaParseada>
 /**
  * `parser` entra nas dependências do efeito, então precisa ser uma referência
  * estável — use uma função de módulo, não uma criada no corpo do componente.
+ *
+ * `range` nulo deixa o hook em espera, carregando, sem ir à rede: serve às abas
+ * cujo nome depende de outra resposta (a do ano anterior sai do ano da corrente).
  */
-export function useRange<T>(range: string, parser: (values: string[][]) => T): EstadoRange<T> {
+export function useRange<T>(
+  range: string | null,
+  parser: (values: string[][]) => T,
+): EstadoRange<T> {
   const [dados, setDados] = useState<T | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -34,6 +40,7 @@ export function useRange<T>(range: string, parser: (values: string[][]) => T): E
   const recarregar = useCallback(() => setGatilho((n) => n + 1), [])
 
   useEffect(() => {
+    if (range == null) return
     const ac = new AbortController()
     let vivo = true
 
@@ -64,6 +71,6 @@ export function useRange<T>(range: string, parser: (values: string[][]) => T): E
   return { dados, carregando, erro, buscadoEm, recarregar }
 }
 
-export function useAba(range: string): EstadoAba {
+export function useAba(range: string | null): EstadoAba {
   return useRange(range, parseAba)
 }

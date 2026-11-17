@@ -12,6 +12,7 @@ import { parseAba } from '../src/api/parseSheet'
 import { ABA_PUBLICIDADE, montarPublicidade } from '../src/data/publicidade'
 import type { Kpi } from '../src/data/kpis'
 import type { SerieMensal } from '../src/data/publicidadeAnalise'
+import { abaDoAno, montarComparativo } from '../src/data/comparativo'
 
 const BASE = process.env.VITE_API_BASE ?? 'https://nmbcoamazonia-api.vercel.app'
 const SHEET = process.env.VITE_SHEET_ID ?? '12vC5uRnSYAzqlBVKBO8AsQCNuvoVNZkRV8e-1kSAZPg'
@@ -32,14 +33,15 @@ const br = (n: number, casas = 0) =>
 
 let divergencias = 0
 
-const r = await fetch(
-  `${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(ABA_PUBLICIDADE)}`,
-)
-if (!r.ok) throw new Error(`API respondeu ${r.status} para "${ABA_PUBLICIDADE}"`)
-const json = (await r.json()) as { success: boolean; data?: { values?: string[][] } }
-if (!json.success || !json.data?.values) throw new Error('Resposta sem dados')
+async function buscarAba(range: string): Promise<string[][]> {
+  const r = await fetch(`${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(range)}`)
+  if (!r.ok) throw new Error(`API respondeu ${r.status} para "${range}"`)
+  const json = (await r.json()) as { success: boolean; data?: { values?: string[][] } }
+  if (!json.success || !json.data?.values) throw new Error(`Resposta sem dados para "${range}"`)
+  return json.data.values
+}
 
-const aba = parseAba(json.data.values)
+const aba = parseAba(await buscarAba(ABA_PUBLICIDADE))
 const pub = montarPublicidade(aba)
 if (!pub) throw new Error('Nenhum mês com dado em 01 PUBLICIDADE')
 const a = pub.analise
@@ -157,3 +159,32 @@ if (a.leadDesatualizado) {
       `  Confira os PIs do período e atualize src/data/campanhasLead.ts (inclusive CONFERIDO_ATE).`,
   )
 }
+
+// --------------------------- comparativo anual ------------------------------
+const nomeAnterior = abaDoAno(ABA_PUBLICIDADE, aba.ano - 1)
+const abaAnterior = parseAba(await buscarAba(nomeAnterior))
+const comp = montarComparativo(aba, abaAnterior, pub.fechado)
+
+console.log(`
+
+COMPARATIVO ${comp.periodo}: ${comp.anoAtual} × ${comp.anoAnterior}   (aba "${nomeAnterior}")`)
+console.log(REGUA)
+if (abaAnterior.ano !== aba.ano - 1) {
+  console.log(`  ATENÇÃO: a aba "${nomeAnterior}" traz o acumulado de ${abaAnterior.ano}.`)
+}
+for (const l of comp.linhas) {
+  const base = (m: number) => (m < comp.mesesPeriodo ? ` (${m}/${comp.mesesPeriodo})` : '')
+  const variacaoTxt = l.baseParcial ? 'base insuficiente' : (l.variacaoTexto ?? '—')
+  console.log(
+    `  ${l.rotulo.padEnd(24)}${(l.anteriorFormatado + base(l.mesesAnterior)).padStart(22)}` +
+      `${(l.atualFormatado + base(l.mesesAtual)).padStart(22)}   ${variacaoTxt}`,
+  )
+  if (l.lacunasAnterior.length) {
+    console.log(`  ${''.padEnd(24)}${comp.anoAnterior} sem dado em: ${l.lacunasAnterior.join(', ')}`)
+  }
+}
+if (comp.semRegistroAnterior.length) {
+  console.log(`
+  Fora do quadro (sem registro em ${comp.anoAnterior}): ${comp.semRegistroAnterior.join(', ')}`)
+}
+console.log('')

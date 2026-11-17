@@ -94,19 +94,24 @@ export function formatVariacao(v: Variacao): string {
  * A variação relativa de uma taxa ("de 3,14% para 5,42% = +73%") se lê errado
  * com facilidade; em pontos percentuais — "▲ 2,3 p.p." — não há ambiguidade.
  */
-export function variacaoEmPontos(atual: number | null, anterior: number | null): Variacao | null {
+export function variacaoEmPontos(
+  atual: number | null,
+  anterior: number | null,
+  /** abaixo disto a variação é "estável"; taxas pequenas (CTR ~0,3%) pedem limiar menor */
+  limiar = 0.05,
+): Variacao | null {
   if (atual == null || anterior == null) return null
   const pontos = atual - anterior
   if (!Number.isFinite(pontos)) return null
   return {
     pct: pontos,
-    direcao: Math.abs(pontos) < 0.05 ? 'estavel' : pontos > 0 ? 'alta' : 'baixa',
+    direcao: Math.abs(pontos) < limiar ? 'estavel' : pontos > 0 ? 'alta' : 'baixa',
   }
 }
 
 /** "▲ 2,3 p.p." */
-export function formatPontos(v: Variacao): string {
-  return `${seta(v.direcao)} ${nf(1).format(Math.abs(v.pct))} p.p.`
+export function formatPontos(v: Variacao, casas = 1): string {
+  return `${seta(v.direcao)} ${nf(casas).format(Math.abs(v.pct))} p.p.`
 }
 
 /**

@@ -5,8 +5,9 @@ da planilha de fechamento, pela API. Substitui a montagem manual do PowerPoint:
 ninguém digita indicador, e o próprio site mostra até que mês os dados estão
 preenchidos.
 
-Esta etapa cobre a **capa** e a **seção de Publicidade** (slides 1, 6, 7 e 8 do
-deck `Publicidade 3tri26 01.09 - V2.pptx`), alimentados pela aba `01 PUBLICIDADE`.
+Esta etapa cobre a **seção de Publicidade**: dez slides alimentados pela aba
+`01 PUBLICIDADE` e, no fim, um **comparativo com o ano anterior** que lê também a
+aba `01 PUBLICIDADE - 2025`.
 
 ## Rodando
 
@@ -67,6 +68,29 @@ PUB-05 têm Ago. Nesses casos o card mostra a nota `sem dado em Ago` e compara
 **A variação é mês contra mês**, sempre rotulada com os meses comparados
 (`Ago vs. Jul`), para não ser lida como variação do acumulado.
 
+## Comparativo anual
+
+A última lâmina compara o ano corrente com o anterior no **mesmo recorte de
+meses** (Jan → mês fechado nos dois anos). A aba do ano anterior é encontrada
+pelo nome `<aba> - <ano - 1>`, com o ano tirado do cabeçalho `Acum. AAAA` da aba
+corrente. Em 2027, o deck passa a ler `01 PUBLICIDADE - 2026` sem mudar o código.
+Se o cabeçalho da aba anterior trouxer outro ano, a lâmina mostra erro em vez de
+comparar.
+
+A planilha de 2025 tem buracos grandes: leads só em Jun, nada em Jan e Mar, e
+fluxo aeroportuário e produção vazios. Por isso:
+
+- cada valor mostra quantos meses o sustentam (`6 de 10 meses`, `só Jun`);
+- a variação **não é calculada** quando o ano anterior tem menos da metade dos
+  meses do corrente. Os leads aparecem como "base insuficiente", e não como +3.333%;
+- indicadores sem nenhum registro no ano anterior saem do quadro e são citados
+  na nota de rodapé;
+- CTR e CPM usam só os meses em que numerador e denominador foram registrados.
+  Em 2025 há investimento em Abr e Mai sem impressões, e somar esse investimento
+  inflaria o CPM.
+
+`npm run conferir` imprime o mesmo quadro no fim da saída.
+
 ## Estrutura
 
 ```
@@ -75,11 +99,12 @@ src/
   api/parseSheet.ts      parser genérico das abas de área — serve as 7 abas
   data/publicidade.ts    regra de negócio da seção (funções puras)
   data/usePublicidade.ts casca React sobre a anterior
+  data/comparativo.ts    ano contra ano (funções puras) + useComparativo.ts
   data/resolveClosedMonth.ts   a automação do mês fechado
   lib/numbers.ts         pt-BR: parse, formato compacto (317 Mi, 867 Mil), variação
   lib/listas.ts          normaliza os campos de texto livre (produtos, praças)
   deck/                  motor de apresentação (canvas 1280x720, atalhos, overview)
-  slides/                os quatro slides
+  slides/                os slides da seção
 scripts/                 extração de assets, download de fonte, conferência de dados
 ```
 
