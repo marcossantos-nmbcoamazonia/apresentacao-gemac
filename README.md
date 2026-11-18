@@ -104,6 +104,9 @@ Por isso:
   meses do corrente. Os leads aparecem como "base insuficiente", e não como +3.333%;
 - indicadores sem nenhum registro no ano anterior saem do quadro e são citados
   na nota de rodapé;
+- **o fluxo aeroportuário (PUB-05) não entra no comparativo.** Em 2025 os
+  valores ficam entre 150 e 436 Mi por mês; em 2026, perto de 2,7 Mi. São
+  metodologias diferentes, e o quadro mostraria uma falsa queda de 99%;
 - **produção (PUB-08) é a exceção.** O dashboard não tem data na aba de produção,
   então 2025 só tem o total do ano, lançado à mão na coluna `Acum. 2025`. Quando
   não há nenhum mês preenchido, esse total vira a base. A linha sai marcada como

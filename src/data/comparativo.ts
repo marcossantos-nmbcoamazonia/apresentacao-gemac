@@ -9,8 +9,8 @@
  *    inteiro de 2025 faria qualquer indicador parecer em queda.
  *
  * 2. **A base do ano anterior é exibida, não presumida.** A planilha de 2025 tem
- *    buracos grandes — leads só em Jun, nada em Jan e Mar, fluxo aeroportuário
- *    e produção vazios. Mês vazio não entra na soma, e cada linha leva quantos
+ *    buracos grandes — leads só em Jun, nada em Jan e Mar, produção sem
+ *    abertura mensal. Mês vazio não entra na soma, e cada linha leva quantos
  *    meses de fato sustentam o número. Quando o ano anterior tem menos da
  *    metade dos meses do corrente, a variação NÃO é calculada: "+3.333% de
  *    leads" sobre um único mês de 2025 seria uma manchete falsa.
@@ -116,7 +116,9 @@ const VOLUMES: DefVolume[] = [
   { id: 'PUB-02', rotulo: 'Impressões digitais', detalhe: 'Redes + Mídia ON', sentido: 'maior-melhor' },
   { id: 'PUB-03', rotulo: 'Cliques', sentido: 'maior-melhor' },
   { id: 'PUB-04', rotulo: 'Impactos OOH', detalhe: 'DOOH + Rua', sentido: 'maior-melhor' },
-  { id: 'PUB-05', rotulo: 'Fluxo aeroportuário', sentido: 'maior-melhor' },
+  // PUB-05 (fluxo aeroportuário) fica de fora de propósito: 2025 traz 150–436 Mi
+  // por mês e 2026 ~2,7 Mi — mais de 100x de diferença, metodologias distintas.
+  // O quadro mostraria "▼ 99%", que não é queda real. Decisão da área (nov/2026).
   { id: 'PUB-01', rotulo: 'Leads gerados', sentido: 'maior-melhor' },
   { id: 'PUB-07', rotulo: 'Investimento de mídia', sentido: 'neutro' },
   {
