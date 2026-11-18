@@ -20,15 +20,24 @@
  *    registradas, e somar esse investimento inflaria o CPM do ano anterior.
  *    Cada razão usa só os meses em que os dois componentes existem.
  *
+ * EXCEÇÃO: PRODUÇÃO DE 2025
+ *
+ * A aba de produção do dashboard não tem coluna de data, então 2025 só tem o
+ * total do ano, digitado na coluna "Acum. 2025" de PUB-08, com os meses vazios.
+ * Para esse indicador, e só quando não há nenhum mês preenchido, o total anual
+ * vira a base de comparação. É uma decisão da área: a linha sai marcada como
+ * "total do ano" e a nota de rodapé explica que o recorte é diferente.
+ *
  * Função pura, sem React — `scripts/conferir-dados.ts` imprime o mesmo quadro.
  */
-import { MESES, type AbaParseada, type Mes } from '../api/parseSheet'
+import { MESES, porId, type AbaParseada, type Mes } from '../api/parseSheet'
 import {
   formatCompact,
   formatFull,
   formatPercent,
   formatPontos,
   formatVariacao,
+  parseBR,
   variacao,
   variacaoEmPontos,
   type Variacao,
@@ -64,6 +73,11 @@ export interface LinhaComparativo {
   lacunasAnterior: Mes[]
   /** ano anterior com menos da metade dos meses do corrente: sem variação */
   baseParcial: boolean
+  /**
+   * A base do ano anterior é o total do ano (coluna "Acum."), não a soma do
+   * período — usado onde a planilha não tem abertura mensal.
+   */
+  anteriorTotalAnual: boolean
   variacao: Variacao | null
   /** "▲ 362%" · "▼ 0,0 p.p." */
   variacaoTexto: string | null
@@ -81,6 +95,8 @@ export interface Comparativo {
   linhas: LinhaComparativo[]
   /** indicadores sem nenhum registro no ano anterior — ficam fora do quadro */
   semRegistroAnterior: string[]
+  /** indicadores cuja base do ano anterior é o total anual (rótulos) */
+  comTotalAnual: string[]
 }
 
 interface DefVolume {
@@ -88,6 +104,11 @@ interface DefVolume {
   rotulo: string
   detalhe?: string
   sentido: Sentido
+  /**
+   * Sem nenhum mês preenchido no ano anterior, usar a coluna "Acum." como
+   * base. Só onde a área garante que o total foi lançado ali à mão.
+   */
+  totalAnualNoAnterior?: boolean
 }
 
 /** Na ordem do quadro: volumes de alcance, depois resultado, depois dinheiro. */
@@ -98,7 +119,12 @@ const VOLUMES: DefVolume[] = [
   { id: 'PUB-05', rotulo: 'Fluxo aeroportuário', sentido: 'maior-melhor' },
   { id: 'PUB-01', rotulo: 'Leads gerados', sentido: 'maior-melhor' },
   { id: 'PUB-07', rotulo: 'Investimento de mídia', sentido: 'neutro' },
-  { id: 'PUB-08', rotulo: 'Produção', detalhe: 'investimento executado', sentido: 'neutro' },
+  {
+    id: 'PUB-08',
+    rotulo: 'Investimento de produção',
+    sentido: 'neutro',
+    totalAnualNoAnterior: true,
+  },
 ]
 
 const TIPO_DO_ID: Record<string, TipoKpi> = { 'PUB-07': 'moeda', 'PUB-08': 'moeda' }
@@ -129,6 +155,7 @@ interface Base {
   valor: number | null
   meses: number
   lacunas: Mes[]
+  totalAnual?: boolean
 }
 
 function montarLinha(
@@ -159,6 +186,7 @@ function montarLinha(
     mesesAtual: atual.meses,
     lacunasAnterior: anterior.lacunas,
     baseParcial,
+    anteriorTotalAnual: anterior.totalAnual === true,
     variacao: v,
     variacaoTexto: v ? (tipo === 'percentual' ? formatPontos(v, 2) : formatVariacao(v)) : null,
     avaliacao: avaliar(v, def.sentido),
@@ -203,12 +231,22 @@ export function montarComparativo(
 
   const linhas: LinhaComparativo[] = []
   const semRegistroAnterior: string[] = []
+  const comTotalAnual: string[] = []
 
   for (const def of VOLUMES) {
-    const ant = base(anterior, def.id)
+    let ant = base(anterior, def.id)
     const atu = base(atual, def.id)
+    if (ant.meses === 0 && def.totalAnualNoAnterior) {
+      // "R$ 0,00" é o que a fórmula da coluna devolve com os meses vazios: zero
+      // aqui quer dizer "não lançado", não "nada investido"
+      const total = parseBR(porId(anterior.linhas, def.id)?.acumAno)
+      if (total != null && total > 0) {
+        ant = { valor: total, meses: 0, lacunas: [], totalAnual: true }
+        comTotalAnual.push(def.rotulo)
+      }
+    }
     if (atu.meses === 0) continue
-    if (ant.meses === 0) {
+    if (ant.valor == null) {
       semRegistroAnterior.push(def.rotulo)
       continue
     }
@@ -252,5 +290,6 @@ export function montarComparativo(
     mesesPeriodo: fechado.indice + 1,
     linhas,
     semRegistroAnterior,
+    comTotalAnual,
   }
 }

@@ -13,6 +13,12 @@ import { ABA_PUBLICIDADE, montarPublicidade } from '../src/data/publicidade'
 import type { Kpi } from '../src/data/kpis'
 import type { SerieMensal } from '../src/data/publicidadeAnalise'
 import { abaDoAno, montarComparativo } from '../src/data/comparativo'
+import {
+  ABA_INFLUENCIA,
+  PLANILHA_INFLUENCIA,
+  parseInfluencia,
+  type MetricaInfluencia,
+} from '../src/data/influencia'
 
 const BASE = process.env.VITE_API_BASE ?? 'https://nmbcoamazonia-api.vercel.app'
 const SHEET = process.env.VITE_SHEET_ID ?? '12vC5uRnSYAzqlBVKBO8AsQCNuvoVNZkRV8e-1kSAZPg'
@@ -33,8 +39,8 @@ const br = (n: number, casas = 0) =>
 
 let divergencias = 0
 
-async function buscarAba(range: string): Promise<string[][]> {
-  const r = await fetch(`${BASE}/google/sheets/${SHEET}/data?range=${encodeURIComponent(range)}`)
+async function buscarAba(range: string, planilha = SHEET): Promise<string[][]> {
+  const r = await fetch(`${BASE}/google/sheets/${planilha}/data?range=${encodeURIComponent(range)}`)
   if (!r.ok) throw new Error(`API respondeu ${r.status} para "${range}"`)
   const json = (await r.json()) as { success: boolean; data?: { values?: string[][] } }
   if (!json.success || !json.data?.values) throw new Error(`Resposta sem dados para "${range}"`)
@@ -175,11 +181,14 @@ if (abaAnterior.ano !== aba.ano - 1) {
 for (const l of comp.linhas) {
   const base = (m: number) => (m < comp.mesesPeriodo ? ` (${m}/${comp.mesesPeriodo})` : '')
   const variacaoTxt = l.baseParcial ? 'base insuficiente' : (l.variacaoTexto ?? '—')
+  const baseAnt = l.anteriorTotalAnual ? ' (ano)' : base(l.mesesAnterior)
   console.log(
-    `  ${l.rotulo.padEnd(24)}${(l.anteriorFormatado + base(l.mesesAnterior)).padStart(22)}` +
+    `  ${l.rotulo.padEnd(24)}${(l.anteriorFormatado + baseAnt).padStart(22)}` +
       `${(l.atualFormatado + base(l.mesesAtual)).padStart(22)}   ${variacaoTxt}`,
   )
-  if (l.lacunasAnterior.length) {
+  if (l.anteriorTotalAnual) {
+    console.log(`  ${''.padEnd(24)}${comp.anoAnterior}: total do ano (coluna Acum.), sem abertura mensal`)
+  } else if (l.lacunasAnterior.length) {
     console.log(`  ${''.padEnd(24)}${comp.anoAnterior} sem dado em: ${l.lacunasAnterior.join(', ')}`)
   }
 }
@@ -187,4 +196,85 @@ if (comp.semRegistroAnterior.length) {
   console.log(`
   Fora do quadro (sem registro em ${comp.anoAnterior}): ${comp.semRegistroAnterior.join(', ')}`)
 }
+console.log('')
+
+// ------------------------- marketing de influência --------------------------
+const inf = parseInfluencia(await buscarAba(ABA_INFLUENCIA, PLANILHA_INFLUENCIA))
+const cabMeses = inf.meses.map((m) => m.nome).join('   ')
+
+console.log(`
+MARKETING DE INFLUÊNCIA   (planilha ${PLANILHA_INFLUENCIA.slice(0, 8)}…, aba "${ABA_INFLUENCIA}")`)
+console.log(`PERÍODO ........... ${inf.periodo}   (pílula: dados até ${inf.curto})`)
+console.log(REGUA)
+
+const fmtM = (v: number | null) => (v == null ? '—' : br(v, Number.isInteger(v) ? 0 : 2))
+const linhaInf = (rotulo: string, m: MetricaInfluencia) =>
+  console.log(
+    `  ${rotulo.padEnd(26)}${m.meses.map((v) => fmtM(v).padStart(12)).join('')}${fmtM(m.total).padStart(14)}`,
+  )
+console.log(`  ${''.padEnd(26)}${inf.meses.map((m) => m.nome.padStart(12)).join('')}${'TOTAL'.padStart(14)}`)
+linhaInf('Conteúdos', inf.conteudos)
+linhaInf('  Stories', inf.stories)
+linhaInf('  Reels', inf.reels)
+linhaInf('  Outros', inf.outros)
+linhaInf('Views totais', inf.views)
+linhaInf('Alcance orgânico', inf.alcance)
+linhaInf('Interações', inf.interacoes)
+linhaInf('Respostas a Stories', inf.respostasStories)
+linhaInf('Influenciadores', inf.influenciadores)
+linhaInf('Campanhas', inf.campanhas)
+linhaInf('Engaj. orgânico (%)', inf.engajamento)
+
+for (const [titulo, itens] of [
+  ['Top 5 campanhas', inf.topCampanhas],
+  ['Top 5 influenciadores', inf.topInfluenciadores],
+] as const) {
+  console.log(`
+  ${titulo}`)
+  for (const it of itens) {
+    console.log(
+      `    ${it.nome.padEnd(26)}${fmtM(it.views).padStart(12)}  ${fmtM(it.participacao).padStart(6)}%`,
+    )
+  }
+}
+
+// a planilha é calculada por fórmula; se alguém sobrescrever uma célula,
+// as somas internas deixam de fechar e aparece aqui
+const avisos: string[] = []
+const soma = (...xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0)
+const confere = (rotulo: string, esperado: number, obtido: number | null) => {
+  if (obtido == null || Math.abs(esperado - obtido) > 0.5) {
+    avisos.push(`${rotulo}: esperado ${br(esperado)}, planilha traz ${fmtM(obtido)}`)
+  }
+}
+const colunas = [...inf.meses.map((m, i) => ({ rotulo: m.nome, i })), { rotulo: 'TOTAL', i: -1 }]
+const em = (m: MetricaInfluencia, i: number) => (i < 0 ? m.total : m.meses[i])
+for (const { rotulo, i } of colunas) {
+  confere(
+    `Interações ${rotulo} = curtidas + comentários + compartilhados + salvos`,
+    soma(em(inf.curtidas, i), em(inf.comentarios, i), em(inf.compartilhados, i), em(inf.salvos, i)),
+    em(inf.interacoes, i),
+  )
+  confere(
+    `Conteúdos ${rotulo} = Stories + Reels + outros`,
+    soma(em(inf.stories, i), em(inf.reels, i), em(inf.outros, i)),
+    em(inf.conteudos, i),
+  )
+}
+for (const [rotulo, m] of [
+  ['Conteúdos', inf.conteudos],
+  ['Views', inf.views],
+  ['Alcance orgânico', inf.alcance],
+  ['Interações', inf.interacoes],
+] as const) {
+  confere(`${rotulo}: TOTAL = soma dos meses`, soma(...m.meses), m.total)
+}
+console.log(
+  avisos.length
+    ? `
+  ATENÇÃO — somas que não fecham:
+${avisos.map((a) => `    · ${a}`).join('\n')}`
+    : `
+  Somas internas conferem (${cabMeses} e TOTAL).`,
+)
 console.log('')

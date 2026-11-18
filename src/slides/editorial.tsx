@@ -383,7 +383,13 @@ export function RotuloHeroi({
 }
 
 /** Assinatura discreta no rodapé, presente em todos os slides de conteúdo. */
-export function Assinatura({ periodo }: { periodo: string | null }) {
+export function Assinatura({
+  periodo,
+  secao = 'Publicidade',
+}: {
+  periodo: string | null
+  secao?: string
+}) {
   return (
     <div
       style={{
@@ -405,7 +411,7 @@ export function Assinatura({ periodo }: { periodo: string | null }) {
         aria-hidden="true"
         style={{ width: 16, height: 13, objectFit: 'contain' }}
       />
-      Banco da Amazônia · Publicidade
+      Banco da Amazônia · {secao}
       {periodo && <span style={{ color: 'rgb(226 255 106 / 55%)' }}>{periodo}</span>}
     </div>
   )

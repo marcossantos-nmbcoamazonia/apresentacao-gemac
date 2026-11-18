@@ -30,6 +30,8 @@ export type EstadoAba = EstadoRange<AbaParseada>
 export function useRange<T>(
   range: string | null,
   parser: (values: string[][]) => T,
+  /** ID de outra planilha; por padrão, a de fechamento (VITE_SHEET_ID) */
+  planilha?: string,
 ): EstadoRange<T> {
   const [dados, setDados] = useState<T | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -47,7 +49,7 @@ export function useRange<T>(
     setCarregando(true)
     setErro(null)
 
-    fetchRange(range, { signal: ac.signal, forcar: gatilho > 0 })
+    fetchRange(range, { signal: ac.signal, forcar: gatilho > 0, planilha })
       .then((r) => {
         if (!vivo) return
         setDados(parser(r.values))
@@ -66,7 +68,7 @@ export function useRange<T>(
       vivo = false
       ac.abort()
     }
-  }, [range, gatilho, parser])
+  }, [range, gatilho, parser, planilha])
 
   return { dados, carregando, erro, buscadoEm, recarregar }
 }

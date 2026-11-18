@@ -29,9 +29,9 @@ export interface ResultadoRange {
   doCache: boolean
 }
 
-function lerCache(range: string): ResultadoRange | null {
+function lerCache(chave: string): ResultadoRange | null {
   try {
-    const cru = sessionStorage.getItem(CACHE_PREFIX + range)
+    const cru = sessionStorage.getItem(CACHE_PREFIX + chave)
     if (!cru) return null
     const { values, buscadoEm } = JSON.parse(cru) as ResultadoRange
     if (!Array.isArray(values)) return null
@@ -42,10 +42,10 @@ function lerCache(range: string): ResultadoRange | null {
   }
 }
 
-function gravarCache(range: string, r: ResultadoRange): void {
+function gravarCache(chave: string, r: ResultadoRange): void {
   try {
     sessionStorage.setItem(
-      CACHE_PREFIX + range,
+      CACHE_PREFIX + chave,
       JSON.stringify({ values: r.values, buscadoEm: r.buscadoEm }),
     )
   } catch {
@@ -55,27 +55,32 @@ function gravarCache(range: string, r: ResultadoRange): void {
 
 export async function fetchRange(
   range: string,
-  opts: { signal?: AbortSignal; forcar?: boolean } = {},
+  /** `planilha`: ID de outra planilha (o consolidado de influência mora em outra) */
+  opts: { signal?: AbortSignal; forcar?: boolean; planilha?: string } = {},
 ): Promise<ResultadoRange> {
+  const planilha = opts.planilha ?? SHEET_ID
+  // a chave da planilha principal fica como antes, para não invalidar o cache
+  const chave = planilha === SHEET_ID ? range : `${planilha}:${range}`
+
   if (!opts.forcar) {
-    const cache = lerCache(range)
+    const cache = lerCache(chave)
     if (cache && Date.now() - cache.buscadoEm < TTL_MS) return cache
   }
 
-  const url = `${BASE}/google/sheets/${SHEET_ID}/data?range=${encodeURIComponent(range)}`
+  const url = `${BASE}/google/sheets/${planilha}/data?range=${encodeURIComponent(range)}`
 
   let resp: Response
   try {
     resp = await fetch(url, { signal: opts.signal, headers: { Accept: 'application/json' } })
   } catch (e) {
     // rede fora: um cache vencido ainda é melhor do que slide vazio na reunião
-    const antigo = lerCache(range)
+    const antigo = lerCache(chave)
     if (antigo) return antigo
     throw new Error(`Não foi possível falar com a API (${(e as Error).message})`)
   }
 
   if (!resp.ok) {
-    const antigo = lerCache(range)
+    const antigo = lerCache(chave)
     if (antigo) return antigo
     throw new Error(`A API respondeu ${resp.status} para a aba "${range}"`)
   }
@@ -90,6 +95,6 @@ export async function fetchRange(
     buscadoEm: Date.now(),
     doCache: false,
   }
-  gravarCache(range, resultado)
+  gravarCache(chave, resultado)
   return resultado
 }

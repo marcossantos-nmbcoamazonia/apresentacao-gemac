@@ -75,7 +75,9 @@ function Linha({
   altura: number
   anoAnterior: number
 }) {
-  const baseAnterior = descreverBase(linha.mesesAnterior, totalMeses, linha.lacunasAnterior)
+  const baseAnterior = linha.anteriorTotalAnual
+    ? `total do ano ${anoAnterior}`
+    : descreverBase(linha.mesesAnterior, totalMeses, linha.lacunasAnterior)
   const baseAtual = descreverBase(linha.mesesAtual, totalMeses, [])
 
   return (
@@ -161,6 +163,9 @@ export function Comparativo({ dados, periodo }: Props) {
     ? [
         `Soma de ${dados.periodo} nos dois anos; mês sem registro fica fora da soma (contagem sob o valor).`,
         `Sem variação quando ${dados.anoAnterior} tem menos da metade dos meses. CTR e CPM só em meses com os dois componentes.`,
+        dados.comTotalAnual.length
+          ? `${dados.comTotalAnual.join(' e ')}: ${dados.anoAnterior} só tem o total do ano, sem abertura mensal.`
+          : '',
         dados.semRegistroAnterior.length
           ? `Sem registro em ${dados.anoAnterior}: ${dados.semRegistroAnterior.join(' e ')}.`
           : '',

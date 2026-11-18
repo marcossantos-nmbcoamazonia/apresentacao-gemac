@@ -3,6 +3,7 @@ import { Deck } from './deck/Deck'
 import type { FonteSlide, SlideDef } from './deck/types'
 import { usePublicidade } from './data/usePublicidade'
 import { useComparativo } from './data/useComparativo'
+import { useInfluencia } from './data/useInfluencia'
 import { ABA_PUBLICIDADE } from './data/publicidade'
 import { ContextoErro } from './slides/editorial'
 import { Capa } from './slides/Capa'
@@ -16,10 +17,12 @@ import { Produtos } from './slides/Produtos'
 import { Pracas } from './slides/Pracas'
 import { Fechamento } from './slides/Fechamento'
 import { Comparativo } from './slides/Comparativo'
+import { Influencia } from './slides/Influencia'
 
 export default function App() {
   const { dados, aba, carregando, erro, buscadoEm, recarregar } = usePublicidade()
   const comparativo = useComparativo(aba, dados?.fechado ?? null)
+  const influencia = useInfluencia()
 
   const fonte: FonteSlide = {
     estado: erro ? 'erro' : carregando ? 'carregando' : 'ok',
@@ -44,11 +47,21 @@ export default function App() {
     aba: comparativo.aba ? `${ABA_PUBLICIDADE} e ${comparativo.aba}` : ABA_PUBLICIDADE,
   }
 
+  // outra planilha, outro ritmo: o consolidado de influência fecha no seu mês
+  const fonteInfluencia: FonteSlide = {
+    estado: influencia.erro ? 'erro' : influencia.carregando ? 'carregando' : 'ok',
+    mes: influencia.dados?.curto ?? null,
+    buscadoEm: influencia.buscadoEm,
+    aba: 'base (Marketing de Influência)',
+  }
+
   const recarregarComparativo = comparativo.recarregar
+  const recarregarInfluencia = influencia.recarregar
   const recarregarTudo = useCallback(() => {
     recarregar()
     recarregarComparativo()
-  }, [recarregar, recarregarComparativo])
+    recarregarInfluencia()
+  }, [recarregar, recarregarComparativo, recarregarInfluencia])
 
   const periodo = dados?.fechado.periodo ?? null
 
@@ -100,6 +113,16 @@ export default function App() {
         render: () => <Fechamento dados={dados} />,
       },
       {
+        id: 'influencia',
+        titulo: 'Marketing de influência',
+        fonte: fonteInfluencia,
+        render: () => (
+          <ContextoErro.Provider value={influencia.erro}>
+            <Influencia dados={influencia.dados} />
+          </ContextoErro.Provider>
+        ),
+      },
+      {
         id: 'comparativo',
         titulo: 'Comparativo anual',
         fonte: fonteComparativo,
@@ -110,7 +133,18 @@ export default function App() {
         ),
       },
     ],
-    [dados, carregando, periodo, fonte, fonteComparativo, comparativo.dados, erroComparativo],
+    [
+      dados,
+      carregando,
+      periodo,
+      fonte,
+      fonteComparativo,
+      comparativo.dados,
+      erroComparativo,
+      fonteInfluencia,
+      influencia.dados,
+      influencia.erro,
+    ],
   )
 
   return (

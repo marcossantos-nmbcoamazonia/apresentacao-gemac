@@ -6,8 +6,9 @@ ninguém digita indicador, e o próprio site mostra até que mês os dados estã
 preenchidos.
 
 Esta etapa cobre a **seção de Publicidade**: dez slides alimentados pela aba
-`01 PUBLICIDADE` e, no fim, um **comparativo com o ano anterior** que lê também a
-aba `01 PUBLICIDADE - 2025`.
+`01 PUBLICIDADE`, uma lâmina de **Marketing de Influência** (outra planilha) e,
+no fim, um **comparativo com o ano anterior**, que lê também a aba
+`01 PUBLICIDADE - 2025`.
 
 ## Rodando
 
@@ -68,6 +69,24 @@ PUB-05 têm Ago. Nesses casos o card mostra a nota `sem dado em Ago` e compara
 **A variação é mês contra mês**, sempre rotulada com os meses comparados
 (`Ago vs. Jul`), para não ser lida como variação do acumulado.
 
+## Marketing de influência
+
+A lâmina lê a aba `base` de uma planilha própria (`VITE_SHEET_ID_INFLUENCIA`,
+com fallback no código). Essa aba não traz registro bruto: ela já é o consolidado
+"Big Numbers", e o deck só reorganiza o que está lá. O parser
+([influencia.ts](src/data/influencia.ts)) acha cada bloco pelo rótulo, então
+inserir linhas na planilha não quebra nada.
+
+- **O período sai do cabeçalho** (`ago./26 … out./26`). Quando a planilha
+  ganhar Nov, a lâmina passa a mostrar "Ago – Nov 2026" sozinha.
+- **O total vem da coluna TOTAL, nunca da soma dos meses.** Influenciadores e
+  campanhas contam únicos (23 + 17 + 16 meses, mas 32 no período), e o
+  engajamento é taxa.
+- As observações da planilha viram a nota de rodapé.
+- `npm run conferir` confere as somas internas: interações = soma das partes,
+  conteúdos = Stories + Reels + outros e TOTAL = soma dos meses nas métricas
+  somáveis.
+
 ## Comparativo anual
 
 A última lâmina compara o ano corrente com o anterior no **mesmo recorte de
@@ -77,14 +96,19 @@ corrente. Em 2027, o deck passa a ler `01 PUBLICIDADE - 2026` sem mudar o códig
 Se o cabeçalho da aba anterior trouxer outro ano, a lâmina mostra erro em vez de
 comparar.
 
-A planilha de 2025 tem buracos grandes: leads só em Jun, nada em Jan e Mar, e
-fluxo aeroportuário e produção vazios. Por isso:
+A planilha de 2025 tem buracos grandes (leads só em Jun, nada em Jan e Mar).
+Por isso:
 
 - cada valor mostra quantos meses o sustentam (`6 de 10 meses`, `só Jun`);
 - a variação **não é calculada** quando o ano anterior tem menos da metade dos
   meses do corrente. Os leads aparecem como "base insuficiente", e não como +3.333%;
 - indicadores sem nenhum registro no ano anterior saem do quadro e são citados
   na nota de rodapé;
+- **produção (PUB-08) é a exceção.** O dashboard não tem data na aba de produção,
+  então 2025 só tem o total do ano, lançado à mão na coluna `Acum. 2025`. Quando
+  não há nenhum mês preenchido, esse total vira a base. A linha sai marcada como
+  "total do ano 2025" e a variação compara Jan → mês fechado de 2026 com o ano
+  inteiro de 2025;
 - CTR e CPM usam só os meses em que numerador e denominador foram registrados.
   Em 2025 há investimento em Abr e Mai sem impressões, e somar esse investimento
   inflaria o CPM.
@@ -100,6 +124,7 @@ src/
   data/publicidade.ts    regra de negócio da seção (funções puras)
   data/usePublicidade.ts casca React sobre a anterior
   data/comparativo.ts    ano contra ano (funções puras) + useComparativo.ts
+  data/influencia.ts     parser do consolidado de influência + useInfluencia.ts
   data/resolveClosedMonth.ts   a automação do mês fechado
   lib/numbers.ts         pt-BR: parse, formato compacto (317 Mi, 867 Mil), variação
   lib/listas.ts          normaliza os campos de texto livre (produtos, praças)
