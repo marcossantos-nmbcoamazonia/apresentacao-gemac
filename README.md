@@ -69,16 +69,6 @@ PUB-05 têm Ago. Nesses casos o card mostra a nota `sem dado em Ago` e compara
 **A variação é mês contra mês**, sempre rotulada com os meses comparados
 (`Ago vs. Jul`), para não ser lida como variação do acumulado.
 
-**O CPL usa só a verba de compra por lead.** As campanhas de lead (Capital de
-Giro e Custeio Agrícola) também têm TV, rádio e DOOH, que não compram lead.
-Investimento e leads de cada campanha vêm do dashboard de performance, os dois
-da mesma tela, e ficam em
-[campanhasLead.ts](src/data/campanhasLead.ts). A planilha de fechamento não tem
-esse recorte, então **este arquivo é atualizado à mão**: copie investimento e
-leads de cada campanha ou etapa e suba `ATUALIZADO_EM`, que aparece no slide.
-`npm run conferir` compara o total de leads do dashboard com o PUB-01 da
-planilha. Uma diferença grande indica que os recortes de data não batem.
-
 ## Marketing de influência
 
 A lâmina lê a aba `base` de uma planilha própria (`VITE_SHEET_ID_INFLUENCIA`,
