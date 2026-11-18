@@ -69,6 +69,16 @@ PUB-05 têm Ago. Nesses casos o card mostra a nota `sem dado em Ago` e compara
 **A variação é mês contra mês**, sempre rotulada com os meses comparados
 (`Ago vs. Jul`), para não ser lida como variação do acumulado.
 
+**O CPL usa só a verba de compra por lead.** As campanhas de lead (Capital de
+Giro e Custeio Agrícola) também têm TV, rádio e DOOH, que não compram lead.
+Investimento e leads de cada campanha vêm do dashboard de performance, os dois
+da mesma tela, e ficam em
+[campanhasLead.ts](src/data/campanhasLead.ts). A planilha de fechamento não tem
+esse recorte, então **este arquivo é atualizado à mão**: copie investimento e
+leads de cada campanha ou etapa e suba `ATUALIZADO_EM`, que aparece no slide.
+`npm run conferir` compara o total de leads do dashboard com o PUB-01 da
+planilha. Uma diferença grande indica que os recortes de data não batem.
+
 ## Marketing de influência
 
 A lâmina lê a aba `base` de uma planilha própria (`VITE_SHEET_ID_INFLUENCIA`,
@@ -99,9 +109,11 @@ comparar.
 A planilha de 2025 tem buracos grandes (leads só em Jun, nada em Jan e Mar).
 Por isso:
 
-- cada valor mostra quantos meses o sustentam (`6 de 10 meses`, `só Jun`);
-- a variação **não é calculada** quando o ano anterior tem menos da metade dos
-  meses do corrente. Os leads aparecem como "base insuficiente", e não como +3.333%;
+- cada valor mostra quantos meses o sustentam (`6 de 10 meses`, `dado só em Jun`);
+- a variação é sempre exibida, mesmo sobre base curta. Os leads saem como
+  ▲ 3.333% sobre 2.167 leads, que é tudo o que 2025 registra em Jan–Out. Os
+  74 de Dez ficam fora do recorte, como todo Nov/Dez de 2025, e a nota de
+  rodapé diz isso;
 - indicadores sem nenhum registro no ano anterior saem do quadro e são citados
   na nota de rodapé;
 - **o fluxo aeroportuário (PUB-05) não entra no comparativo.** Em 2025 os

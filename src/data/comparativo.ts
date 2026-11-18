@@ -11,9 +11,10 @@
  * 2. **A base do ano anterior é exibida, não presumida.** A planilha de 2025 tem
  *    buracos grandes — leads só em Jun, nada em Jan e Mar, produção sem
  *    abertura mensal. Mês vazio não entra na soma, e cada linha leva quantos
- *    meses de fato sustentam o número. Quando o ano anterior tem menos da
- *    metade dos meses do corrente, a variação NÃO é calculada: "+3.333% de
- *    leads" sobre um único mês de 2025 seria uma manchete falsa.
+ *    meses de fato sustentam o número ("dado só em Jun", "6 de 10 meses"). A
+ *    variação é sempre calculada — a área optou por mostrá-la mesmo sobre base
+ *    curta (leads de 2025 só têm Jun no recorte) — e a contagem de meses sob o
+ *    valor é o que deixa a leitura honesta.
  *
  * 3. **Métrica derivada só sobre meses pareados.** CTR e CPM dividem um
  *    indicador por outro; em 2025 há investimento em Abr/Mai sem impressões
@@ -71,8 +72,6 @@ export interface LinhaComparativo {
   mesesAtual: number
   /** meses do período sem registro no ano anterior */
   lacunasAnterior: Mes[]
-  /** ano anterior com menos da metade dos meses do corrente: sem variação */
-  baseParcial: boolean
   /**
    * A base do ano anterior é o total do ano (coluna "Acum."), não a soma do
    * período — usado onde a planilha não tem abertura mensal.
@@ -166,12 +165,10 @@ function montarLinha(
   anterior: Base,
   atual: Base,
 ): LinhaComparativo {
-  const baseParcial = anterior.meses > 0 && anterior.meses * 2 < atual.meses
   // CTR anda na casa de 0,3%: com uma casa decimal, uma queda de 12% sairia
   // como "0,0 p.p." — por isso duas casas e limiar de 0,005 p.p.
-  const v = baseParcial
-    ? null
-    : tipo === 'percentual'
+  const v =
+    tipo === 'percentual'
       ? variacaoEmPontos(atual.valor, anterior.valor, 0.005)
       : variacao(atual.valor, anterior.valor)
 
@@ -187,7 +184,6 @@ function montarLinha(
     mesesAnterior: anterior.meses,
     mesesAtual: atual.meses,
     lacunasAnterior: anterior.lacunas,
-    baseParcial,
     anteriorTotalAnual: anterior.totalAnual === true,
     variacao: v,
     variacaoTexto: v ? (tipo === 'percentual' ? formatPontos(v, 2) : formatVariacao(v)) : null,

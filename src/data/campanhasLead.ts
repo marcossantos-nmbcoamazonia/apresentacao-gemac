@@ -4,80 +4,52 @@
  * POR QUE ISTO EXISTE
  *
  * PUB-01 (leads) tem na própria planilha a ressalva "So Capital de Giro e
- * Custeio Agricola": só essas campanhas geram lead. O CPL vinha dividindo o
- * investimento de mídia INTEIRO (PUB-07, R$ 11,8 Mi — institucional, always on,
- * patrocínios e tudo mais) por esses leads, o que inflava o custo em mais de
- * quatro vezes. O numerador tem que cobrir as mesmas campanhas que o
- * denominador.
+ * Custeio Agricola": só essas campanhas geram lead. Mas nem todo o dinheiro
+ * dessas campanhas compra lead — elas também têm TV, rádio e DOOH, que fazem
+ * alcance e não convertem em formulário. O CPL honesto divide SÓ a verba de
+ * compra por lead pelos leads que ela gerou.
+ *
+ * Histórico: o CPL já dividiu a mídia inteira (PUB-07) pelos leads, depois o
+ * valor integral dos PIs (com TV e DOOH, R$ 37,47). Os dois inflavam o custo.
  *
  * DE ONDE VEM
  *
- * A planilha de fechamento não tem investimento por campanha — ela só tem o
- * total mensal. Os valores abaixo foram transcritos da planilha de PIs
- * aprovados, coluna de valor autorizado (a primeira, verde), que é a única
- * preenchida nas três linhas: no Custeio a coluna de executado está em branco.
+ * Do dashboard de performance de cada campanha (consolidado por veículo:
+ * Google Ads, Facebook, Instagram, LinkedIn…). Investimento e leads vêm da MESMA
+ * tela, então numerador e denominador cobrem exatamente as mesmas compras.
+ * Por isso o denominador aqui NÃO é o PUB-01 da planilha: misturar os leads de
+ * uma fonte com o investimento de outra é o erro que este arquivo existe para
+ * evitar.
  *
  * COMO ATUALIZAR
  *
- * Campanha nova com meta de lead entra aqui, com o número do PI. No dia em que
- * a COPAC criar uma linha de "investimento em campanhas de lead" na aba
- * 01 PUBLICIDADE, este arquivo sai e o cálculo passa a ler a planilha.
+ * Copie investimento e leads do dashboard para cada campanha, acrescente as
+ * etapas novas e suba ATUALIZADO_EM. O CPL do slide se recalcula sozinho.
  */
 
 export interface CampanhaLead {
-  /** número do PI, para auditoria contra a planilha de aprovados */
-  pi: string
   nome: string
-  /** meios contratados, como constam no PI */
-  meios: string
-  /** valor autorizado, em reais */
+  /** etapa da campanha, quando ela roda em fases */
+  etapa?: string
+  /** verba de compra por lead (mídia de performance), em reais */
   investimento: number
-  agencia: string
+  /** leads gerados por essa verba, no mesmo dashboard */
+  leads: number
 }
 
-/**
- * Até que mês de fechamento esta lista foi conferida.
- *
- * É o contrapeso de ter o numerador chumbado e o denominador vivo: os leads
- * vêm da planilha e avançam sozinhos a cada mês, enquanto a lista abaixo só
- * anda quando alguém a edita. Sem esta marca, um mês novo entraria com leads a
- * mais e investimento de menos, e o CPL cairia por um motivo falso.
- *
- * `analisarPublicidade` compara isto com o mês fechado e avisa no slide quando
- * a planilha passa à frente. Ao conferir campanhas novas, suba o índice.
- */
-export const CONFERIDO_ATE = { indice: 7, nome: 'Ago', ano: 2026 } // 0 = Jan
+/** Data em que os números abaixo foram copiados do dashboard. */
+export const ATUALIZADO_EM = '18/11/2026'
 
-/** Conferido em 14/10/2026 contra a planilha de PIs aprovados. */
 export const CAMPANHAS_LEAD: CampanhaLead[] = [
-  {
-    pi: '2026/16',
-    nome: 'Campanha Capital de Giro 2026',
-    meios: 'TV, internet e mídia exterior',
-    investimento: 1_066_482.16,
-    agencia: 'Cálix',
-  },
-  {
-    pi: '2026/18',
-    nome: 'Google · Campanha Capital de Giro 2026',
-    meios: 'Internet',
-    investimento: 107_811.0,
-    agencia: 'Cálix',
-  },
-  {
-    pi: '2026/15',
-    nome: 'Campanha Custeio',
-    meios: 'TV, rádio e internet',
-    investimento: 1_612_899.03,
-    agencia: 'Escala',
-  },
+  { nome: 'Capital de Giro', etapa: 'etapa 1', investimento: 190_314.87, leads: 40_546 },
+  { nome: 'Capital de Giro', etapa: 'etapa 2', investimento: 124_450.83, leads: 13_922 },
+  { nome: 'Custeio Agrícola', investimento: 429_220.55, leads: 28_255 },
 ]
 
 export const INVESTIMENTO_LEAD = CAMPANHAS_LEAD.reduce((s, c) => s + c.investimento, 0)
+export const LEADS_CAMPANHAS = CAMPANHAS_LEAD.reduce((s, c) => s + c.leads, 0)
 
-/** "2026/15, 2026/16 e 2026/18" — para a nota de rodapé do slide. */
-export function pisDasCampanhas(): string {
-  const pis = CAMPANHAS_LEAD.map((c) => c.pi).sort()
-  if (pis.length <= 1) return pis.join('')
-  return `${pis.slice(0, -1).join(', ')} e ${pis[pis.length - 1]}`
+/** CPL de uma campanha; null se ela ainda não gerou lead. */
+export function cplDa(c: CampanhaLead): number | null {
+  return c.leads > 0 ? c.investimento / c.leads : null
 }

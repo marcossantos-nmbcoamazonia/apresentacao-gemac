@@ -36,14 +36,23 @@ const numero: CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
-/** "só Jun" para base de até 3 meses; "6 de 10 meses" acima disso. */
+/** "dado só em Jun" para base de até 3 meses; "6 de 10 meses" acima disso. */
 function descreverBase(meses: number, total: number, lacunas: string[]): string | null {
   if (meses >= total) return null
   if (meses <= 3) {
     const comDado = MESES.slice(0, total).filter((m) => !lacunas.includes(m))
-    return `só ${comDado.join(', ')}`
+    return `dado só em ${comDado.join(', ')}`
   }
   return `${meses} de ${total} meses`
+}
+
+/** Meses do ano anterior que ficam depois do recorte: "Nov e Dez", "Jun – Dez". */
+function mesesForaDoRecorte(mesesPeriodo: number): string | null {
+  const fora = MESES.slice(mesesPeriodo)
+  if (!fora.length) return null
+  if (fora.length === 1) return fora[0]
+  if (fora.length === 2) return `${fora[0]} e ${fora[1]}`
+  return `${fora[0]} – ${fora[fora.length - 1]}`
 }
 
 function Barras({ linha }: { linha: LinhaComparativo }) {
@@ -127,26 +136,15 @@ function Linha({
       <Barras linha={linha} />
 
       <div style={numero}>
-        {linha.baseParcial ? (
-          <span
-            title={`${anoAnterior} tem dado em ${linha.mesesAnterior} de ${linha.mesesAtual} meses — base insuficiente para variação`}
-            style={{ fontSize: 13, color: TEXTO_FRACO }}
-          >
-            base {anoAnterior}
-            <br />
-            insuficiente
-          </span>
-        ) : (
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              color: linha.avaliacao ? COR_AVALIACAO[linha.avaliacao] : TEXTO_FRACO,
-            }}
-          >
-            {linha.variacaoTexto ?? '—'}
-          </span>
-        )}
+        <span
+          style={{
+            fontSize: 20,
+            fontWeight: 600,
+            color: linha.avaliacao ? COR_AVALIACAO[linha.avaliacao] : TEXTO_FRACO,
+          }}
+        >
+          {linha.variacaoTexto ?? '—'}
+        </span>
       </div>
     </div>
   )
@@ -161,8 +159,12 @@ export function Comparativo({ dados, periodo }: Props) {
 
   const ressalvas = dados
     ? [
-        `Soma de ${dados.periodo} nos dois anos; mês sem registro fica fora da soma (contagem sob o valor).`,
-        `Sem variação quando ${dados.anoAnterior} tem menos da metade dos meses. CTR e CPM só em meses com os dois componentes.`,
+        `Soma de ${dados.periodo} nos dois anos${
+          mesesForaDoRecorte(dados.mesesPeriodo)
+            ? ` — ${mesesForaDoRecorte(dados.mesesPeriodo)} de ${dados.anoAnterior} ficam fora da comparação`
+            : ''
+        }; mês sem registro não entra na soma (contagem sob o valor).`,
+        `CTR e CPM só em meses com os dois componentes.`,
         dados.comTotalAnual.length
           ? `${dados.comTotalAnual.join(' e ')}: ${dados.anoAnterior} só tem o total do ano, sem abertura mensal.`
           : '',

@@ -151,20 +151,25 @@ console.log(
     : `\n${divergencias} KPI(s) divergem do deck — esperado se a planilha avançou de mês.\n`,
 )
 
-// ------------------------- base do CPL (lista chumbada) ---------------------
-console.log(`\nBASE DO CPL — campanhas com meta de lead`)
+// ------------------ base do CPL (dashboard de performance) ------------------
+console.log(`\nBASE DO CPL — compra por lead, copiada do dashboard em ${a.cplAtualizadoEm}`)
 console.log(REGUA)
-for (const c of a.campanhasLead) {
-  console.log(`  PI ${c.pi.padEnd(9)}${('R$ ' + br(c.investimento, 2)).padStart(18)}  ${c.nome} (${c.agencia})`)
-}
-console.log(`  ${''.padEnd(9)}${('R$ ' + br(a.investimentoLead, 2)).padStart(18)}  TOTAL`)
-if (a.leadDesatualizado) {
+const linhaCpl = (nome: string, inv: number, leads: number) =>
   console.log(
-    `\n  ATENÇÃO: lista conferida até ${a.leadConferidoAte}, planilha fechou ${pub.fechado.curto}.\n` +
-      `  Os leads do mês novo entram no CPL mas o investimento dele não — o CPL está otimista.\n` +
-      `  Confira os PIs do período e atualize src/data/campanhasLead.ts (inclusive CONFERIDO_ATE).`,
+    `  ${nome.padEnd(30)}${('R$ ' + br(inv, 2)).padStart(18)}${br(leads).padStart(12)} leads` +
+      `${('CPL R$ ' + br(inv / leads, 2)).padStart(18)}`,
   )
+for (const c of a.campanhasLead) {
+  linhaCpl(c.etapa ? `${c.nome} · ${c.etapa}` : c.nome, c.investimento, c.leads)
 }
+linhaCpl('TOTAL', a.investimentoLead, a.leadsCampanhas)
+// os leads do dashboard e o PUB-01 da planilha são fontes diferentes; uma
+// diferença grande indica recorte de datas distinto entre as duas
+const difLeads = a.leadsCampanhas - a.series.leads.total
+console.log(
+  `\n  Leads no dashboard: ${br(a.leadsCampanhas)} · PUB-01 da planilha (${pub.fechado.periodo}): ` +
+    `${br(a.series.leads.total)} · diferença ${difLeads >= 0 ? '+' : ''}${br(difLeads)}`,
+)
 
 // --------------------------- comparativo anual ------------------------------
 const nomeAnterior = abaDoAno(ABA_PUBLICIDADE, aba.ano - 1)
@@ -180,7 +185,7 @@ if (abaAnterior.ano !== aba.ano - 1) {
 }
 for (const l of comp.linhas) {
   const base = (m: number) => (m < comp.mesesPeriodo ? ` (${m}/${comp.mesesPeriodo})` : '')
-  const variacaoTxt = l.baseParcial ? 'base insuficiente' : (l.variacaoTexto ?? '—')
+  const variacaoTxt = l.variacaoTexto ?? '—'
   const baseAnt = l.anteriorTotalAnual ? ' (ano)' : base(l.mesesAnterior)
   console.log(
     `  ${l.rotulo.padEnd(24)}${(l.anteriorFormatado + baseAnt).padStart(22)}` +

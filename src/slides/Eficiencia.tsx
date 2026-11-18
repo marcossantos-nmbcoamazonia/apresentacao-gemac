@@ -1,8 +1,15 @@
 import type { DadosPublicidade } from '../data/publicidade'
 import type { Derivada } from '../data/publicidadeAnalise'
+import { cplDa } from '../data/campanhasLead'
 import { LinhaMes } from '../charts/graficos'
 import { formatCompact, formatFull, formatPercent } from '../lib/numbers'
 import { Assinatura, Eyebrow, MARGEM, Nota, Palco, TituloDisplay } from './editorial'
+
+/** "R$ 4,69" — CPL precisa dos centavos; o formato compacto os apagaria. */
+const reais = (n: number | null) =>
+  n == null
+    ? '—'
+    : `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)}`
 
 /**
  * As três relações que a planilha não traz prontas. Cada uma mostra a conta que
@@ -106,16 +113,16 @@ export function Eficiencia({ dados }: { dados: DadosPublicidade | null }) {
             />
           </div>
 
-          {/* o CPL mudou de base: as campanhas que o sustentam ficam à vista,
-              com o PI, para a diretoria poder conferir linha a linha */}
+          {/* a base do CPL fica à vista, campanha a campanha, com o CPL de
+              cada uma — a diretoria confere a conta sem sair do slide */}
           <div style={{ position: 'absolute', left: 760, top: 442, width: 436 }}>
             <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--areia)', marginBottom: 14 }}>
-              Campanhas com meta de lead
+              Compra por lead, por campanha
             </div>
 
             {a.campanhasLead.map((c) => (
               <div
-                key={c.pi}
+                key={`${c.nome}${c.etapa ?? ''}`}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -137,12 +144,22 @@ export function Eficiencia({ dados }: { dados: DadosPublicidade | null }) {
                     }}
                   >
                     {c.nome}
+                    {c.etapa && (
+                      <span style={{ color: 'rgb(245 240 226 / 50%)' }}> · {c.etapa}</span>
+                    )}
                   </span>
-                  <span style={{ fontSize: 11, color: 'rgb(245 240 226 / 42%)' }}>
-                    PI {c.pi} · {c.agencia}
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: 'rgb(245 240 226 / 42%)',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {formatFull(c.leads)} leads · CPL {reais(cplDa(c))}
                   </span>
                 </span>
                 <span
+                  title={formatFull(c.investimento, { moeda: true })}
                   style={{
                     fontSize: 15,
                     fontWeight: 600,
@@ -168,22 +185,39 @@ export function Eficiencia({ dados }: { dados: DadosPublicidade | null }) {
             >
               <span style={{ fontSize: 13, color: 'rgb(245 240 226 / 58%)' }}>
                 Base do CPL
-                {a.leadDesatualizado && (
-                  <span style={{ display: 'block', fontSize: 11, color: '#ffc4b4', marginTop: 3 }}>
-                    conferida até {a.leadConferidoAte} · planilha fechou {dados?.fechado.curto}
-                  </span>
-                )}
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    color: 'rgb(245 240 226 / 42%)',
+                    marginTop: 3,
+                  }}
+                >
+                  dashboard de performance · {a.cplAtualizadoEm}
+                </span>
               </span>
-              <span
-                title={formatFull(a.investimentoLead, { moeda: true })}
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: 'var(--lima)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {formatCompact(a.investimentoLead, { moeda: true })}
+              <span style={{ textAlign: 'right' }}>
+                <span
+                  title={formatFull(a.investimentoLead, { moeda: true })}
+                  style={{
+                    display: 'block',
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: 'var(--lima)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {formatCompact(a.investimentoLead, { moeda: true })}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: 'rgb(245 240 226 / 52%)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {formatFull(a.leadsCampanhas)} leads
+                </span>
               </span>
             </div>
           </div>
