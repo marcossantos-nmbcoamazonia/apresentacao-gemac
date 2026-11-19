@@ -80,13 +80,16 @@ e precisam ser **atualizados à mão** a cada fechamento.
 - Redes sociais entram em Internet.
 - A entrega de Internet vem do PUB-02 da planilha, para bater com os outros
   slides, e não da tabela.
+- A entrega de DOOH também vem da planilha: é o PUB-04 (impactos OOH do slide
+  3) menos o DOOH shopping. Assim, DOOH + DOOH shopping = PUB-04. DOOH
+  aeroporto fica fora dessa conta, porque o aeroporto é outro indicador (PUB-05).
 - Cada meio fica com a sua unidade (impressões, impactos, inserções,
   publicações), por isso não há total de entrega.
 - **O total por meio é igual ao investimento de mídia do slide de Investimento
-  (PUB-07).** Quando a tabela soma menos, a diferença entra no meio TV. O
-  ajuste é calculado na hora a partir da planilha, sem nada digitado, e a nota
-  de rodapé informa o valor. Se a tabela passar do PUB-07, nada é ajustado e a
-  nota avisa. `npm run conferir` confirma que os dois slides batem.
+  (PUB-07).** Quando a tabela soma menos, a diferença entra no meio DOOH. O
+  ajuste é calculado na hora a partir da planilha, sem nada digitado. Ele não
+  aparece no slide, mas `npm run conferir` mostra o valor e confirma que os dois
+  slides batem. Se a tabela passar do PUB-07, nada é ajustado e a nota avisa.
 
 ## Marketing de influência
 
@@ -119,12 +122,10 @@ A planilha de 2025 tem buracos grandes (leads só em Jun, nada em Jan e Mar).
 Por isso:
 
 - cada valor mostra quantos meses o sustentam (`6 de 10 meses`, `dado só em Jun`);
-- a variação é sempre exibida, mesmo sobre base curta. Os leads saem como
-  ▲ 3.333% sobre 2.167 leads, que é tudo o que 2025 registra em Jan–Out. Os
-  74 de Dez ficam fora do recorte, como todo Nov/Dez de 2025, e a nota de
-  rodapé diz isso;
-- indicadores sem nenhum registro no ano anterior saem do quadro e são citados
-  na nota de rodapé;
+- a variação é sempre exibida, mesmo sobre base curta. Os leads saem com a
+  alta calculada sobre os 2.167 leads, que é tudo o que 2025 registra em
+  Jan–Out. Os 74 de Dez ficam fora do recorte, como todo Nov/Dez de 2025;
+- indicadores sem nenhum registro no ano anterior saem do quadro;
 - **o fluxo aeroportuário (PUB-05) não entra no comparativo.** Em 2025 os
   valores ficam entre 150 e 436 Mi por mês; em 2026, perto de 2,7 Mi. São
   metodologias diferentes, e o quadro mostraria uma falsa queda de 99%;
@@ -136,6 +137,12 @@ Por isso:
 - CTR e CPM usam só os meses em que numerador e denominador foram registrados.
   Em 2025 há investimento em Abr e Mai sem impressões, e somar esse investimento
   inflaria o CPM.
+
+A nota de rodapé explica a queda das impressões digitais: em 2026 o
+investimento de mídia foi menor no período de defeso eleitoral, com campanhas
+majoritariamente mercadológicas. As duas porcentagens da frase (queda de
+impressões e de investimento) vêm do próprio quadro. Se uma delas deixar de
+ser queda, a frase sai sem números.
 
 `npm run conferir` imprime o mesmo quadro no fim da saída.
 

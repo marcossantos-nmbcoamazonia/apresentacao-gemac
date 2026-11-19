@@ -12,7 +12,7 @@ import { parseAba } from '../src/api/parseSheet'
 import { ABA_PUBLICIDADE, montarPublicidade } from '../src/data/publicidade'
 import type { Kpi } from '../src/data/kpis'
 import type { SerieMensal } from '../src/data/publicidadeAnalise'
-import { montarDistribuicao, TOTAL_TABELA } from '../src/data/distribuicaoMidia'
+import { MEIO_AJUSTE, montarDistribuicao, TOTAL_TABELA } from '../src/data/distribuicaoMidia'
 import { abaDoAno, montarComparativo } from '../src/data/comparativo'
 import {
   ABA_INFLUENCIA,
@@ -169,19 +169,32 @@ if (a.leadDesatualizado) {
 
 // --------------------------- distribuição de mídia --------------------------
 const temDadoS = (s: SerieMensal) => s.pontos.some((p) => p.valor != null)
-const dist = montarDistribuicao(
-  temDadoS(a.series.impressoes) ? a.series.impressoes.total : null,
-  temDadoS(a.series.midia) ? a.series.midia.total : null,
-)
+const totalS = (s: SerieMensal) => (temDadoS(s) ? s.total : null)
+const dist = montarDistribuicao({
+  impressoes: totalS(a.series.impressoes),
+  impactosOOH: totalS(a.series.ooh),
+  investimentoExecutado: totalS(a.series.midia),
+})
 console.log(`\n\nDISTRIBUIÇÃO DE MÍDIA POR MEIO   (valores transcritos em src/data/distribuicaoMidia.ts)`)
 console.log(REGUA)
 for (const m of dist.meios) {
   console.log(
     `  ${m.meio.padEnd(16)}${('R$ ' + br(m.investimento, 2)).padStart(18)}  ${br(m.participacao * 100, 1).padStart(5)}%` +
       `${(m.entrega == null ? '—' : br(m.entrega)).padStart(16)} ${m.entrega == null ? '' : m.unidade}` +
-      `${m.entregaDaPlanilha ? '  (PUB-02)' : ''}${m.ajuste > 0 ? `  (inclui ajuste de R$ ${br(m.ajuste, 2)})` : ''}`,
+      `${m.entregaDaPlanilha === 'impressoes' ? '  (PUB-02)' : ''}` +
+      `${m.entregaDaPlanilha === 'ooh-restante' ? '  (PUB-04 − shopping)' : ''}` +
+      `${m.ajuste > 0 ? `  (inclui ajuste de R$ ${br(m.ajuste, 2)})` : ''}`,
   )
 }
+// DOOH + as fatias de OOH (shopping) têm que somar o PUB-04 do slide de números
+const somaOOH = dist.meios
+  .filter((m) => m.entregaDaPlanilha === 'ooh-restante' || m.parteDoOOH)
+  .reduce((s, m) => s + (m.entrega ?? 0), 0)
+console.log(
+  Math.abs(somaOOH - a.series.ooh.total) < 0.5
+    ? `\n  DOOH + DOOH shopping = PUB-04 (${br(a.series.ooh.total)} impactos): bate com o slide de números.`
+    : `\n  ATENÇÃO: DOOH + DOOH shopping (${br(somaOOH)}) difere do PUB-04 (${br(a.series.ooh.total)}).`,
+)
 console.log(`  ${'TOTAL'.padEnd(16)}${('R$ ' + br(dist.total, 2)).padStart(18)}`)
 console.log(
   Math.abs(dist.totalTabela - TOTAL_TABELA) < 0.01
@@ -189,10 +202,10 @@ console.log(
     : `\n  ATENÇÃO: soma transcrita (R$ ${br(dist.totalTabela, 2)}) difere do "Total geral" (R$ ${br(TOTAL_TABELA, 2)}).`,
 )
 console.log(`  Investimento de mídia executado (PUB-07): R$ ${br(a.series.midia.total, 2)}`)
-if (dist.ajuste > 0) console.log(`  Ajuste somado em TV: R$ ${br(dist.ajuste, 2)}`)
+if (dist.ajuste > 0) console.log(`  Ajuste somado em ${MEIO_AJUSTE}: R$ ${br(dist.ajuste, 2)}`)
 console.log(
   dist.excedente > 0
-    ? `  ATENÇÃO: a tabela passa do PUB-07 em R$ ${br(dist.excedente, 2)} — não há como fechar somando em TV.`
+    ? `  ATENÇÃO: a tabela passa do PUB-07 em R$ ${br(dist.excedente, 2)} — não há como fechar somando em ${MEIO_AJUSTE}.`
     : Math.abs(dist.total - a.series.midia.total) < 0.005
       ? `  Total por meio = PUB-07: os slides de Distribuição e Investimento batem.`
       : `  ATENÇÃO: total por meio (R$ ${br(dist.total, 2)}) difere do PUB-07.`,

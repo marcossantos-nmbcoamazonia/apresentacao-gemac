@@ -46,15 +46,6 @@ function descreverBase(meses: number, total: number, lacunas: string[]): string 
   return `${meses} de ${total} meses`
 }
 
-/** Meses do ano anterior que ficam depois do recorte: "Nov e Dez", "Jun – Dez". */
-function mesesForaDoRecorte(mesesPeriodo: number): string | null {
-  const fora = MESES.slice(mesesPeriodo)
-  if (!fora.length) return null
-  if (fora.length === 1) return fora[0]
-  if (fora.length === 2) return `${fora[0]} e ${fora[1]}`
-  return `${fora[0]} – ${fora[fora.length - 1]}`
-}
-
 function Barras({ linha }: { linha: LinhaComparativo }) {
   const max = Math.max(linha.anterior ?? 0, linha.atual ?? 0)
   const pct = (v: number | null) => (max > 0 && v != null ? `${(v / max) * 100}%` : '0%')
@@ -157,24 +148,24 @@ export function Comparativo({ dados, periodo }: Props) {
 
   const rotuloAno = (ano: number) => (dados ? `${dados.periodo} ${ano}` : String(ano))
 
-  const ressalvas = dados
-    ? [
-        `Soma de ${dados.periodo} nos dois anos${
-          mesesForaDoRecorte(dados.mesesPeriodo)
-            ? ` — ${mesesForaDoRecorte(dados.mesesPeriodo)} de ${dados.anoAnterior} ficam fora da comparação`
-            : ''
-        }; mês sem registro não entra na soma (contagem sob o valor).`,
-        `CTR e CPM só em meses com os dois componentes.`,
-        dados.comTotalAnual.length
-          ? `${dados.comTotalAnual.join(' e ')}: ${dados.anoAnterior} só tem o total do ano, sem abertura mensal.`
-          : '',
-        dados.semRegistroAnterior.length
-          ? `Sem registro em ${dados.anoAnterior}: ${dados.semRegistroAnterior.join(' e ')}.`
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' ')
-    : ''
+  // A nota explica a queda das impressões digitais (decisão da área, nov/2026):
+  // verba de mídia menor no defeso eleitoral, com campanhas mercadológicas.
+  // As porcentagens saem do próprio quadro; se um dia impressões ou
+  // investimento não estiverem em queda, a frase perde os números.
+  const pct = (id: string) => {
+    const v = linhas.find((l) => l.id === id)?.variacao
+    return v?.direcao === 'baixa' ? Math.round(Math.abs(v.pct)) : null
+  }
+  const quedaImpressoes = pct('PUB-02')
+  const quedaInvestimento = pct('PUB-07')
+  const ressalvas = !dados
+    ? ''
+    : quedaImpressoes != null && quedaInvestimento != null
+      ? `A queda de ${quedaImpressoes}% nas impressões digitais acompanha um investimento de mídia ` +
+        `${quedaInvestimento}% menor em ${dados.anoAtual}: no período de defeso eleitoral, a ` +
+        `comunicação concentrou-se em campanhas majoritariamente mercadológicas.`
+      : `Em ${dados.anoAtual}, o período de defeso eleitoral reduziu o investimento de mídia, e a ` +
+        `comunicação concentrou-se em campanhas majoritariamente mercadológicas.`
 
   return (
     <Palco veu="nenhum" textura="/assets/mosaico-2.jpg">

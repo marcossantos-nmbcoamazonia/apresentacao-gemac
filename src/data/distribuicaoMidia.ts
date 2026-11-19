@@ -9,20 +9,26 @@
  * não há rota da API para ela, então os valores estão transcritos aqui. Total
  * geral da tabela: R$ 14.265.612,12 — conferido por `npm run conferir`.
  *
- * QUATRO REGRAS
+ * CINCO REGRAS
  *
  * 1. **Redes sociais entram em Internet.** A tabela traz as duas linhas
  *    separadas (redes com R$ 0,00); o investimento é somado em Internet.
  * 2. **A entrega de Internet vem da planilha de fechamento**, não da tabela:
  *    são as impressões digitais de PUB-02, o mesmo número dos outros slides.
  *    A tabela traz 61,0 Mi (internet) + 13,0 Mi (redes), outra base de medição.
- * 3. **Cada meio tem a sua unidade de entrega** — inserções, impressões,
+ * 3. **A entrega de DOOH também vem da planilha.** O slide de números mostra os
+ *    impactos OOH de PUB-04 (DOOH + rua), e a tabela trazia bem menos (64 Mi).
+ *    A planilha é a fonte certa (decisão da área, nov/2026): DOOH fica com
+ *    PUB-04 menos o DOOH shopping, para que DOOH + DOOH shopping = PUB-04.
+ *    DOOH aeroporto não entra nessa conta — o aeroporto é outro indicador
+ *    (PUB-05, fluxo aeroportuário).
+ * 4. **Cada meio tem a sua unidade de entrega** — inserções, impressões,
  *    impactos, publicações. Somar entregas de meios diferentes não faz sentido,
  *    por isso não há "total de entrega" (o "169 Mi" da tabela mistura tudo).
- * 4. **O total por meio fecha com o investimento de mídia executado (PUB-07).**
+ * 5. **O total por meio fecha com o investimento de mídia executado (PUB-07).**
  *    O slide de Investimento lê o PUB-07 da planilha; os dois slides têm que
  *    mostrar o mesmo total. Quando a tabela soma menos, a diferença entra no
- *    meio TV (decisão da área, nov/2026). O ajuste é calculado na hora, a partir
+ *    meio DOOH (decisão da área, nov/2026). O ajuste é calculado na hora, a partir
  *    da planilha ao vivo — não é digitado — então acompanha o PUB-07 sozinho.
  *    Se a tabela somar MAIS que o executado, nada é ajustado e a nota avisa.
  *
@@ -31,18 +37,27 @@
 
 export type UnidadeEntrega = 'inserções' | 'impressões' | 'impactos' | 'publicações'
 
+/**
+ * De onde vem a entrega de um meio, quando não é da tabela:
+ * - 'impressoes': PUB-02 inteiro (Internet)
+ * - 'ooh-restante': PUB-04 menos os meios marcados com `parteDoOOH` (DOOH)
+ */
+export type EntregaDaPlanilha = 'impressoes' | 'ooh-restante'
+
 export interface MeioDef {
   meio: string
   investimento: number
   /** entrega da tabela; null = sem entrega registrada */
   entrega: number | null
   unidade: UnidadeEntrega
-  /** a entrega vem do PUB-02 da planilha (Internet), não da tabela */
-  entregaDaPlanilha?: boolean
+  /** a entrega vem da planilha de fechamento, não da tabela */
+  entregaDaPlanilha?: EntregaDaPlanilha
+  /** a entrega (da tabela) é uma fatia de PUB-04 e sai do "ooh-restante" */
+  parteDoOOH?: boolean
 }
 
-/** Meio que absorve a diferença até o investimento executado (regra 4). */
-export const MEIO_AJUSTE = 'TV'
+/** Meio que absorve a diferença até o investimento executado (regra 5). */
+export const MEIO_AJUSTE = 'DOOH'
 
 export const MEIOS_2026: MeioDef[] = [
   // Internet + Redes sociais (R$ 7.460.246,04 + R$ 0,00)
@@ -51,9 +66,16 @@ export const MEIOS_2026: MeioDef[] = [
     investimento: 7_460_246.04 + 0,
     entrega: null,
     unidade: 'impressões',
-    entregaDaPlanilha: true,
+    entregaDaPlanilha: 'impressoes',
   },
-  { meio: 'DOOH', investimento: 2_173_626.14, entrega: 63_583_673, unidade: 'impactos' },
+  // a tabela traz 63.583.673 impactos; a entrega exibida é PUB-04 − shopping
+  {
+    meio: 'DOOH',
+    investimento: 2_173_626.14,
+    entrega: null,
+    unidade: 'impactos',
+    entregaDaPlanilha: 'ooh-restante',
+  },
   { meio: 'TV aberta', investimento: 1_605_444.89, entrega: 3_558, unidade: 'inserções' },
   // a tabela traz entrega 0 para TV: sem inserções registradas, não "zero inserções"
   { meio: 'TV', investimento: 1_213_877.15, entrega: null, unidade: 'inserções' },
@@ -61,7 +83,13 @@ export const MEIOS_2026: MeioDef[] = [
   { meio: 'Rádio', investimento: 413_864.05, entrega: 3_273, unidade: 'inserções' },
   { meio: 'DOOH aeroporto', investimento: 296_842.05, entrega: 20_797_153, unidade: 'impactos' },
   { meio: 'TV fechada', investimento: 280_165.93, entrega: 505, unidade: 'inserções' },
-  { meio: 'DOOH shopping', investimento: 197_178.74, entrega: 10_387_916, unidade: 'impactos' },
+  {
+    meio: 'DOOH shopping',
+    investimento: 197_178.74,
+    entrega: 10_387_916,
+    unidade: 'impactos',
+    parteDoOOH: true,
+  },
   { meio: 'TV segmentada', investimento: 38_276.56, entrega: 117, unidade: 'inserções' },
 ]
 
@@ -87,23 +115,46 @@ export interface DistribuicaoMidia {
   excedente: number
 }
 
+/** Números da planilha de fechamento que a distribuição usa. */
+export interface DaPlanilha {
+  /** PUB-02, impressões digitais do período */
+  impressoes: number | null
+  /** PUB-04, impactos OOH do período */
+  impactosOOH: number | null
+  /** PUB-07, investimento de mídia executado do período */
+  investimentoExecutado: number | null
+}
+
 /**
- * Monta a distribuição: encaixa as impressões de PUB-02 em Internet e, se a
- * tabela somar menos que o investimento executado, completa a diferença em TV.
+ * Monta a distribuição: encaixa as entregas da planilha (Internet ← PUB-02,
+ * DOOH ← PUB-04 − shopping) e, se a tabela somar menos que o investimento
+ * executado, completa a diferença no MEIO_AJUSTE (DOOH).
  */
-export function montarDistribuicao(
-  impressoesInternet: number | null,
-  investimentoExecutado: number | null,
-): DistribuicaoMidia {
+export function montarDistribuicao(p: DaPlanilha): DistribuicaoMidia {
   const totalTabela = MEIOS_2026.reduce((s, m) => s + m.investimento, 0)
 
   // centavos inteiros: somas de float deixariam o total a 0,0000001 do PUB-07
   const centavos = (n: number) => Math.round(n * 100)
   const dif =
-    investimentoExecutado == null ? 0 : centavos(investimentoExecutado) - centavos(totalTabela)
+    p.investimentoExecutado == null
+      ? 0
+      : centavos(p.investimentoExecutado) - centavos(totalTabela)
   const ajuste = dif > 0 ? dif / 100 : 0
   const excedente = dif < 0 ? -dif / 100 : 0
   const total = totalTabela + ajuste
+
+  const fatiasOOH = MEIOS_2026.filter((m) => m.parteDoOOH).reduce(
+    (s, m) => s + (m.entrega ?? 0),
+    0,
+  )
+  const oohRestante =
+    p.impactosOOH != null && p.impactosOOH - fatiasOOH >= 0 ? p.impactosOOH - fatiasOOH : null
+
+  const entregaDe = (m: MeioDef): number | null => {
+    if (m.entregaDaPlanilha === 'impressoes') return p.impressoes
+    if (m.entregaDaPlanilha === 'ooh-restante') return oohRestante
+    return m.entrega
+  }
 
   const meios = MEIOS_2026.map((m) => {
     const extra = m.meio === MEIO_AJUSTE ? ajuste : 0
@@ -111,7 +162,7 @@ export function montarDistribuicao(
     return {
       ...m,
       investimento,
-      entrega: m.entregaDaPlanilha ? impressoesInternet : m.entrega,
+      entrega: entregaDe(m),
       ajuste: extra,
       participacao: total > 0 ? investimento / total : 0,
     }

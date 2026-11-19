@@ -1,5 +1,5 @@
 import { ABA_PUBLICIDADE, type DadosPublicidade } from '../data/publicidade'
-import { MEIO_AJUSTE, montarDistribuicao, type Meio } from '../data/distribuicaoMidia'
+import { montarDistribuicao, type Meio } from '../data/distribuicaoMidia'
 import type { SerieMensal } from '../data/publicidadeAnalise'
 import { formatCompact, formatadorFixo, formatFull, formatPercent } from '../lib/numbers'
 import { Assinatura, Eyebrow, MARGEM, Nota, NumeroHeroi, Palco, TituloDisplay } from './editorial'
@@ -95,13 +95,15 @@ function Linha({ m, maior, altura }: { m: Meio; maior: number; altura: number })
 }
 
 export function Distribuicao({ dados }: { dados: DadosPublicidade | null }) {
-  const impressoes = dados?.analise.series.impressoes
-  const executado = dados?.analise.series.midia
-  // o total por meio fecha com o mesmo PUB-07 do slide de Investimento
-  const dist = montarDistribuicao(
-    temDado(impressoes) ? impressoes.total : null,
-    temDado(executado) ? executado.total : null,
-  )
+  const s = dados?.analise.series
+  const total = (serie: SerieMensal | undefined) => (temDado(serie) ? serie.total : null)
+  // entregas de Internet e DOOH e o total investido saem da mesma planilha dos
+  // slides de Números (PUB-02, PUB-04) e de Investimento (PUB-07)
+  const dist = montarDistribuicao({
+    impressoes: total(s?.impressoes),
+    impactosOOH: total(s?.ooh),
+    investimentoExecutado: total(s?.midia),
+  })
   const maior = dist.meios[0]?.investimento ?? 1
   // o quadro ocupa de ~226 a ~610 px; 8 meios cabem em 42 px, 10 pedem 38
   const altura = Math.min(42, Math.floor(384 / Math.max(dist.meios.length, 1)))
@@ -163,11 +165,9 @@ export function Distribuicao({ dados }: { dados: DadosPublicidade | null }) {
       </div>
 
       <Nota style={{ position: 'absolute', left: MARGEM, right: MARGEM, bottom: 66 }}>
-        Internet inclui redes sociais; suas impressões são as da planilha de fechamento (PUB-02),
-        as mesmas dos demais slides. TV em inserções, rádio em inserções, DOOH em impactos, jornal
-        em publicações — unidades distintas, por isso as entregas não se somam.
-        {dist.ajuste > 0 &&
-          ` ${MEIO_AJUSTE} inclui ${formatFull(dist.ajuste, { moeda: true })} para o total fechar com o investimento de mídia executado da aba ${ABA_PUBLICIDADE} (PUB-07).`}
+        Internet inclui redes sociais. Entregas de Internet e DOOH vêm da planilha de fechamento,
+        as mesmas do slide de números: impressões (PUB-02) e impactos OOH (PUB-04), com DOOH
+        shopping à parte. Cada meio tem a sua unidade, por isso as entregas não se somam.
         {dist.excedente > 0 &&
           ` A tabela por meio soma ${formatCompact(dist.excedente, { moeda: true })} acima do investimento de mídia executado da aba ${ABA_PUBLICIDADE} (PUB-07).`}
       </Nota>
