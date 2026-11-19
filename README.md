@@ -69,6 +69,22 @@ PUB-05 têm Ago. Nesses casos o card mostra a nota `sem dado em Ago` e compara
 **A variação é mês contra mês**, sempre rotulada com os meses comparados
 (`Ago vs. Jul`), para não ser lida como variação do acumulado.
 
+## Distribuição de mídia
+
+O slide 4 mostra quanto cada meio recebeu e o que entregou. É a mesma lâmina do
+deck de 2025. A tabela de veiculação por meio ainda não tem rota na API, então os
+valores ficam transcritos em [distribuicaoMidia.ts](src/data/distribuicaoMidia.ts)
+e precisam ser **atualizados à mão** a cada fechamento.
+`npm run conferir` confere se a soma dos meios bate com o "Total geral" da tabela.
+
+- Redes sociais entram em Internet.
+- A entrega de Internet vem do PUB-02 da planilha, para bater com os outros
+  slides, e não da tabela.
+- Cada meio fica com a sua unidade (impressões, impactos, inserções,
+  publicações), por isso não há total de entrega.
+- A nota de rodapé mostra a diferença entre o total da tabela e o investimento
+  executado do PUB-07.
+
 ## Marketing de influência
 
 A lâmina lê a aba `base` de uma planilha própria (`VITE_SHEET_ID_INFLUENCIA`,
