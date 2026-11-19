@@ -82,8 +82,11 @@ e precisam ser **atualizados à mão** a cada fechamento.
   slides, e não da tabela.
 - Cada meio fica com a sua unidade (impressões, impactos, inserções,
   publicações), por isso não há total de entrega.
-- A nota de rodapé mostra a diferença entre o total da tabela e o investimento
-  executado do PUB-07.
+- **O total por meio é igual ao investimento de mídia do slide de Investimento
+  (PUB-07).** Quando a tabela soma menos, a diferença entra no meio TV. O
+  ajuste é calculado na hora a partir da planilha, sem nada digitado, e a nota
+  de rodapé informa o valor. Se a tabela passar do PUB-07, nada é ajustado e a
+  nota avisa. `npm run conferir` confirma que os dois slides batem.
 
 ## Marketing de influência
 

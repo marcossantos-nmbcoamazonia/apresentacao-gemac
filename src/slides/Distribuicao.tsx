@@ -1,5 +1,5 @@
 import { ABA_PUBLICIDADE, type DadosPublicidade } from '../data/publicidade'
-import { montarDistribuicao, type Meio } from '../data/distribuicaoMidia'
+import { MEIO_AJUSTE, montarDistribuicao, type Meio } from '../data/distribuicaoMidia'
 import type { SerieMensal } from '../data/publicidadeAnalise'
 import { formatCompact, formatadorFixo, formatFull, formatPercent } from '../lib/numbers'
 import { Assinatura, Eyebrow, MARGEM, Nota, NumeroHeroi, Palco, TituloDisplay } from './editorial'
@@ -76,25 +76,34 @@ function Linha({ m, maior, altura }: { m: Meio; maior: number; altura: number })
         {formatPercent(m.participacao * 100, 1)}
       </span>
 
-      <span
-        title={m.entrega == null ? undefined : `${formatFull(m.entrega)} ${m.unidade}`}
-        style={{ textAlign: 'right', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}
-      >
-        <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--lima)' }}>
-          {formatCompact(m.entrega)}
+      {m.entrega == null ? (
+        // sem entrega registrada na tabela (TV): traço, sem unidade
+        <span style={{ textAlign: 'right', fontSize: 17, color: TEXTO_FRACO }}>—</span>
+      ) : (
+        <span
+          title={`${formatFull(m.entrega)} ${m.unidade}`}
+          style={{ textAlign: 'right', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}
+        >
+          <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--lima)' }}>
+            {formatCompact(m.entrega)}
+          </span>
+          <span style={{ fontSize: 13.5, color: TEXTO_FRACO }}> {m.unidade}</span>
         </span>
-        <span style={{ fontSize: 13.5, color: TEXTO_FRACO }}> {m.unidade}</span>
-      </span>
+      )}
     </div>
   )
 }
 
 export function Distribuicao({ dados }: { dados: DadosPublicidade | null }) {
   const impressoes = dados?.analise.series.impressoes
-  const dist = montarDistribuicao(temDado(impressoes) ? impressoes.total : null)
-  const maior = dist.meios[0]?.investimento ?? 1
   const executado = dados?.analise.series.midia
-  // o quadro ocupa de ~226 a ~610 px; 8 meios cabem em 42 px, 9 pedem 40
+  // o total por meio fecha com o mesmo PUB-07 do slide de Investimento
+  const dist = montarDistribuicao(
+    temDado(impressoes) ? impressoes.total : null,
+    temDado(executado) ? executado.total : null,
+  )
+  const maior = dist.meios[0]?.investimento ?? 1
+  // o quadro ocupa de ~226 a ~610 px; 8 meios cabem em 42 px, 10 pedem 38
   const altura = Math.min(42, Math.floor(384 / Math.max(dist.meios.length, 1)))
 
   const cabecalho = ['Meio', 'Participação no investimento', 'Investimento', '%', 'Entrega']
@@ -157,9 +166,10 @@ export function Distribuicao({ dados }: { dados: DadosPublicidade | null }) {
         Internet inclui redes sociais; suas impressões são as da planilha de fechamento (PUB-02),
         as mesmas dos demais slides. TV em inserções, rádio em inserções, DOOH em impactos, jornal
         em publicações — unidades distintas, por isso as entregas não se somam.
-        {temDado(executado) &&
-          Math.abs(executado.total - dist.total) >= 1 &&
-          ` O investimento de mídia executado da aba ${ABA_PUBLICIDADE} soma ${formatFull(executado.total, { moeda: true })}, ${formatCompact(Math.abs(executado.total - dist.total), { moeda: true })} ${executado.total > dist.total ? 'acima' : 'abaixo'} do total por meio.`}
+        {dist.ajuste > 0 &&
+          ` ${MEIO_AJUSTE} inclui ${formatFull(dist.ajuste, { moeda: true })} para o total fechar com o investimento de mídia executado da aba ${ABA_PUBLICIDADE} (PUB-07).`}
+        {dist.excedente > 0 &&
+          ` A tabela por meio soma ${formatCompact(dist.excedente, { moeda: true })} acima do investimento de mídia executado da aba ${ABA_PUBLICIDADE} (PUB-07).`}
       </Nota>
 
       <Assinatura periodo={dados?.fechado.periodo ?? null} />
